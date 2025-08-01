@@ -988,35 +988,7 @@ console.log('性能报告:', result.performanceMetrics);
 - 编写单元测试
 - 更新相关文档
 
-### 🐛 报告问题
 
-发现 Bug？请通过以下方式报告：
-
-1. 在 [Issues](https://github.com/your-username/sentra-auto-browser/issues) 页面创建新问题
-2. 提供详细的错误信息和复现步骤
-3. 包含系统环境和版本信息
-4. 如果可能，提供最小复现示例
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
-
-## 🙏 致谢
-
-感谢以下开源项目和服务：
-
-- **[Playwright](https://playwright.dev/)** - 强大的浏览器自动化库
-- **[OpenAI](https://openai.com/)** - GPT系列模型支持
-- **[Google AI](https://ai.google/)** - Gemini模型支持
-- **[Anthropic](https://anthropic.com/)** - Claude模型支持
-- **[TypeScript](https://www.typescriptlang.org/)** - 类型安全的JavaScript
-- **[Node.js](https://nodejs.org/)** - JavaScript运行时环境
-
-## 📞 联系我们
-
-- 🏠 **项目主页**: [GitHub Repository](https://github.com/your-username/sentra-auto-browser)
-- 🐛 **问题反馈**: [GitHub Issues](https://github.com/your-username/sentra-auto-browser/issues)
-- 💬 **讨论交流**: [GitHub Discussions](https://github.com/your-username/sentra-auto-browser/discussions)
 
 ## 🌟 支持项目
 
@@ -1025,53 +997,6 @@ console.log('性能报告:', result.performanceMetrics);
 - ⭐ 给项目一个星标
 - 🔄 分享给更多的开发者
 - 🤝 参与贡献代码
-
-## 🤝 贡献指南
-
-我们欢迎所有形式的贡献！无论是报告bug、提出新功能建议，还是提交代码改进。
-
-详细的贡献指南请查看 [CONTRIBUTING.md](CONTRIBUTING.md)。
-
-### 🐛 报告问题
-
-如果你发现了bug或有功能建议，请：
-
-1. 检查 [Issues](https://github.com/JustForSO/Sentra-Auto-Browser/issues) 是否已有相关问题
-2. 如果没有，请创建新的Issue，包含：
-   - 详细的问题描述
-   - 复现步骤
-   - 期望的行为
-   - 实际的行为
-   - 环境信息（操作系统、Node.js版本等）
-
-### 💻 代码贡献
-
-1. **Fork项目** 到你的GitHub账户
-2. **创建分支** `git checkout -b feature/amazing-feature`
-3. **提交更改** `git commit -m 'Add some amazing feature'`
-4. **推送分支** `git push origin feature/amazing-feature`
-5. **创建Pull Request**
-
-### 📝 代码规范
-
-- 使用TypeScript编写代码
-- 遵循现有的代码风格
-- 添加适当的注释（中文）
-- 确保所有测试通过
-- 更新相关文档
-
-### 🧪 测试
-
-```bash
-# 运行测试
-npm test
-
-# 运行特定测试
-npm test -- --grep "测试名称"
-
-# 生成测试覆盖率报告
-npm run test:coverage
-```
 
 ## 📝 更新日志
 
