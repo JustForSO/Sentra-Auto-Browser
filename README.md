@@ -1,4 +1,4 @@
-# 🤖 Sentra Auto Browser
+# Sentra Auto Browser
 
 > 🚀 基于AI驱动的智能浏览器自动化框架，让网页操作变得简单而强大！
 
@@ -269,7 +269,7 @@ BROWSER_DEBUG_HOST=localhost
 BROWSER_DEBUG_PORT=9222
 BROWSER_AUTO_CLOSE=false
 
-# 反检测模式（推荐）
+# 反检测模式
 BROWSER_STEALTH_MODE=true
 BROWSER_MAXIMIZED=true
 ```
