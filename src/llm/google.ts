@@ -113,7 +113,7 @@ export class GoogleLLM extends BaseLLM {
     // Use Google's OpenAI-compatible endpoint
     this.client = new OpenAI({
       apiKey: config.apiKey,
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/',
     });
 
     logger.info(`Using Google Gemini via OpenAI-compatible API`, 'GoogleLLM');
