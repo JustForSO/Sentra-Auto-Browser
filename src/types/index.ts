@@ -25,6 +25,9 @@ export interface BrowserProfile {
   reducedMotion?: 'reduce' | 'no-preference';
   forcedColors?: 'active' | 'none';
   autoInstall?: boolean;
+  // 下载配置
+  acceptDownloads?: boolean;
+  downloadsPath?: string;
 }
 
 export interface ActionResult {
@@ -66,6 +69,7 @@ export interface AgentSettings {
   enableLoopDetection?: boolean;
   maxConsecutiveFailures?: number;
   maxSimilarActions?: number;
+  enablePlugins?: boolean;
   customPrompts?: {
     systemPrompt?: string;
     planningPrompt?: string;
@@ -266,6 +270,44 @@ export interface WaitForNavigationAction {
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle';
 }
 
+// 插件相关动作类型
+export interface ExecutePluginAction {
+  type: 'execute_plugin';
+  pluginId: string;
+  parameters?: Record<string, any>;
+  description?: string;
+}
+
+export interface CreatePageEffectAction {
+  type: 'create_page_effect';
+  effectType: 'snowfall' | 'rain' | 'fireworks' | 'particles' | 'custom';
+  parameters?: {
+    intensity?: number;
+    color?: string;
+    duration?: number;
+    customCode?: string;
+  };
+  description?: string;
+}
+
+export interface ModifyPageAction {
+  type: 'modify_page';
+  modifications: DOMModification[];
+  preserveOriginal?: boolean;
+  description?: string;
+}
+
+export interface WrapPageInIframeAction {
+  type: 'wrap_page_iframe';
+  iframeOptions?: {
+    width?: string;
+    height?: string;
+    border?: string;
+    sandbox?: string;
+  };
+  description?: string;
+}
+
 export type Action =
   | ClickAction
   | TypeAction
@@ -290,7 +332,11 @@ export type Action =
   | RefreshAction
   | SetCookieAction
   | WaitForElementAction
-  | WaitForNavigationAction;
+  | WaitForNavigationAction
+  | ExecutePluginAction
+  | CreatePageEffectAction
+  | ModifyPageAction
+  | WrapPageInIframeAction;
 
 // Tab decision interface for intelligent tab switching
 export interface TabDecision {
@@ -424,4 +470,172 @@ export interface PerformanceMetrics {
   screenshotsTaken: number;
   errorsEncountered: number;
   retriesPerformed: number;
+}
+
+// ============================================================================
+// 插件系统类型定义
+// ============================================================================
+
+/**
+ * 插件基础接口
+ */
+export interface Plugin {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  author?: string;
+  category: PluginCategory;
+  tags?: string[];
+
+  // 插件生命周期方法
+  initialize?(context: PluginContext): Promise<void>;
+  execute(params: PluginExecuteParams): Promise<PluginResult>;
+  cleanup?(): Promise<void>;
+
+  // 插件配置
+  config?: PluginConfig;
+  dependencies?: string[];
+  permissions?: PluginPermission[];
+}
+
+/**
+ * 插件类别
+ */
+export type PluginCategory =
+  | 'visual-effects'    // 视觉特效
+  | 'page-modification' // 页面修改
+  | 'interaction'       // 交互增强
+  | 'data-extraction'   // 数据提取
+  | 'automation'        // 自动化工具
+  | 'utility';          // 实用工具
+
+/**
+ * 插件权限
+ */
+export type PluginPermission =
+  | 'dom-read'          // 读取DOM
+  | 'dom-write'         // 修改DOM
+  | 'iframe-create'     // 创建iframe
+  | 'script-inject'     // 注入脚本
+  | 'style-inject'      // 注入样式
+  | 'network-request'   // 网络请求
+  | 'storage-access'    // 存储访问
+  | 'clipboard-access'; // 剪贴板访问
+
+/**
+ * 插件配置
+ */
+export interface PluginConfig {
+  enabled: boolean;
+  autoLoad?: boolean;
+  priority?: number;
+  settings?: Record<string, any>;
+  constraints?: {
+    maxExecutionTime?: number;
+    maxMemoryUsage?: number;
+    allowedDomains?: string[];
+    blockedDomains?: string[];
+  };
+}
+
+/**
+ * 插件上下文
+ */
+export interface PluginContext {
+  pluginId: string;
+  browserSession: any; // BrowserSession实例
+  page: any;           // Playwright页面实例
+  domService: any;     // DOM服务实例
+  logger: any;         // 日志服务实例
+  config: PluginConfig;
+  metadata: {
+    currentUrl: string;
+    pageTitle: string;
+    timestamp: Date;
+    sessionId: string;
+  };
+}
+
+/**
+ * 插件执行参数
+ */
+export interface PluginExecuteParams {
+  context: PluginContext;
+  parameters?: Record<string, any>;
+  aiRequest?: {
+    description: string;
+    intent: string;
+    confidence: number;
+  };
+}
+
+/**
+ * 插件执行结果
+ */
+export interface PluginResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+  data?: any;
+  metadata?: {
+    executionTime: number;
+    memoryUsed?: number;
+    domChanges?: number;
+    screenshot?: string;
+  };
+  cleanup?: () => Promise<void>;
+}
+
+/**
+ * 页面修改插件特定接口
+ */
+export interface PageModificationPlugin extends Plugin {
+  category: PluginCategory;
+
+  // 页面修改特定方法
+  createIframe?(originalContent: string): Promise<string>;
+  injectStyles?(styles: string): Promise<void>;
+  injectScripts?(scripts: string): Promise<void>;
+  modifyDOM?(modifications: DOMModification[]): Promise<void>;
+}
+
+/**
+ * DOM修改操作
+ */
+export interface DOMModification {
+  type: 'create' | 'modify' | 'delete' | 'move';
+  target?: string;        // CSS选择器或XPath
+  element?: {
+    tag: string;
+    attributes?: Record<string, string>;
+    content?: string;
+    styles?: Record<string, string>;
+  };
+  position?: 'before' | 'after' | 'inside' | 'replace';
+}
+
+/**
+ * 插件管理器接口
+ */
+export interface PluginManager {
+  // 插件注册和管理
+  register(plugin: Plugin): Promise<boolean>;
+  unregister(pluginId: string): Promise<boolean>;
+  getPlugin(pluginId: string): Plugin | null;
+  getAllPlugins(): Plugin[];
+  getPluginsByCategory(category: PluginCategory): Plugin[];
+
+  // 插件执行
+  execute(pluginId: string, params: PluginExecuteParams): Promise<PluginResult>;
+  executeByCategory(category: PluginCategory, params: PluginExecuteParams): Promise<PluginResult[]>;
+
+  // 插件状态管理
+  enable(pluginId: string): Promise<boolean>;
+  disable(pluginId: string): Promise<boolean>;
+  isEnabled(pluginId: string): boolean;
+
+  // 生命周期管理
+  initializeAll(): Promise<void>;
+  cleanupAll(): Promise<void>;
 }

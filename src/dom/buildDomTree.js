@@ -365,7 +365,7 @@
       label.style.borderRadius = "4px";
       label.style.fontSize = `${Math.min(12, Math.max(8, firstRect.height / 2))}px`;
       label.textContent = index;
-      // 🎯 确保标签不影响页面布局
+      //  确保标签不影响页面布局
       label.style.margin = "0";
       label.style.border = "none";
       label.style.outline = "none";
@@ -675,12 +675,29 @@
    */
   function isElementVisible(element) {
     const style = getCachedComputedStyle(element);
-    return (
+
+    //  Enhanced visibility check for CF and challenge elements
+    // CF elements might have special display states
+    const isBasicallyVisible = (
       element.offsetWidth > 0 &&
       element.offsetHeight > 0 &&
       style.visibility !== "hidden" &&
       style.display !== "none"
     );
+
+    // If basically visible, return true
+    if (isBasicallyVisible) {
+      return true;
+    }
+
+    //  Special case for CF challenge elements that might be hidden but still interactive
+    // Use enhanced CF detection
+    if (isCloudflareChallengeElement(element)) {
+      // For CF elements, be more lenient with visibility
+      return style.display !== "none" && style.visibility !== "hidden";
+    }
+
+    return isBasicallyVisible;
   }
 
   /**
@@ -841,6 +858,118 @@
       element.getAttribute('aria-haspopup') === 'true'
     )) {
       return true;
+    }
+
+    //  Enhanced CF (Cloudflare) challenge detection
+    // Check for Cloudflare Turnstile checkbox patterns
+    if (element.classList && (
+      element.classList.contains('cb-c') ||      // CF checkbox container
+      element.classList.contains('cb-lb') ||     // CF checkbox label
+      element.classList.contains('cb-i') ||      // CF checkbox icon
+      element.classList.contains('cb-lb-t') ||   // CF checkbox label text
+      element.classList.contains('cb-container') || // CF container
+      element.classList.contains('cf-turnstile') || // CF turnstile widget
+      element.classList.contains('challenge-form') || // CF challenge form
+      element.classList.contains('challenge-container') // CF challenge container
+    )) {
+      return true;
+    }
+
+    // 检查role="alert"的元素（CF经常使用这个）
+    if (element.getAttribute('role') === 'alert') {
+      return true;
+    }
+
+    // 检查包含CF相关文本的元素
+    const text = element.textContent?.trim() || '';
+    if (text.includes('确认您是真人') || text.includes('验证您是真人') ||
+        text.includes('Verify you are human') || text.includes('确认是真人') ||
+        text.includes('CLOUDFLARE') || text.includes('Cloudflare') ||
+        text.includes('确认您是真人') || text.includes('验证') ||
+        text.includes('人机验证') || text.includes('安全验证')) {
+      return true;
+    }
+
+    // 检查元素的innerHTML是否包含CF相关内容
+    const innerHTML = element.innerHTML || '';
+    if (innerHTML.includes('cloudflare') || innerHTML.includes('turnstile') ||
+        innerHTML.includes('challenge') || innerHTML.includes('verify')) {
+      return true;
+    }
+
+    // Check for CF-specific attributes and IDs
+    if (element.id && (
+      element.id.includes('cf-') ||
+      element.id.includes('turnstile') ||
+      element.id.includes('challenge') ||
+      element.id === 'content' && element.getAttribute('aria-live') === 'polite' // CF main container
+    )) {
+      return true;
+    }
+
+    // Check for CF-specific roles and ARIA attributes
+    if (element.getAttribute('role') === 'alert' &&
+        element.closest('[id*="cf"], [class*="cf"], [class*="turnstile"], [class*="challenge"]')) {
+      return true;
+    }
+
+    //  Use enhanced CF detection function
+    if (isCloudflareChallengeElement(element)) {
+      return true;
+    }
+
+    //  Enhanced CF child element detection
+    // Check if element is a child of CF challenge container
+    const cfParent = element.closest('[class*="cb-"], [class*="cf-"], [id*="cf"], [id*="turnstile"], [id*="challenge"]');
+    if (cfParent) {
+      // For elements inside CF containers, be more aggressive in detection
+      if (
+        // Input elements in CF context
+        (tagName === 'input' && element.type === 'checkbox') ||
+        // Labels in CF context
+        (tagName === 'label') ||
+        // Spans that might be clickable in CF context
+        (tagName === 'span' && (
+          element.classList.contains('cb-i') ||
+          element.classList.contains('cb-lb-t') ||
+          element.textContent?.trim().length > 0
+        )) ||
+        // Divs with CF-specific classes
+        (tagName === 'div' && element.classList && (
+          element.classList.contains('cb-c') ||
+          element.classList.contains('cb-lb')
+        ))
+      ) {
+        return true;
+      }
+    }
+
+    //  超强CF文本检测 - 检查任何包含CF相关文本的元素
+    const elementText = element.textContent?.trim() || '';
+    const elementHTML = element.innerHTML || '';
+    if (elementText.includes('确认您是真人') || elementText.includes('CLOUDFLARE') ||
+        elementText.includes('Cloudflare') || elementText.includes('验证') ||
+        elementText.includes('人机验证') || elementText.includes('安全验证') ||
+        elementHTML.includes('cloudflare') || elementHTML.includes('turnstile')) {
+      return true;
+    }
+
+    //  检查是否在包含CF文本的父元素内
+    let parent = element.parentElement;
+    while (parent && parent !== document.body) {
+      const parentText = parent.textContent?.trim() || '';
+      const parentHTML = parent.innerHTML || '';
+      if (parentText.includes('确认您是真人') || parentText.includes('CLOUDFLARE') ||
+          parentText.includes('Cloudflare') || parentText.includes('验证') ||
+          parentText.includes('人机验证') || parentHTML.includes('cloudflare') ||
+          parentHTML.includes('turnstile')) {
+        // 如果父元素包含CF文本，则当前元素也应该被检测
+        if (tagName === 'input' || tagName === 'label' || tagName === 'span' ||
+            tagName === 'div' || tagName === 'button') {
+          return true;
+        }
+      }
+      parent = parent.parentElement;
     }
 
     const interactiveRoles = new Set([
@@ -1146,6 +1275,17 @@
       return buttonTypes.includes(inputType);
     }
 
+    //  Enhanced checkbox detection for CF and other challenges
+    // Check if element contains or is related to checkbox functionality
+    if (tagName === 'label' && element.querySelector('input[type="checkbox"]')) {
+      return true;
+    }
+
+    // Check for elements that wrap checkbox inputs (common in CF)
+    if (element.querySelector && element.querySelector('input[type="checkbox"]')) {
+      return true;
+    }
+
     // 有点击事件的元素
     if (element.onclick || element.hasAttribute('onclick')) {
       return true;
@@ -1286,6 +1426,110 @@
   // --- End distinct interaction check ---
 
   /**
+   *  Enhanced Cloudflare challenge detection
+   * Detects various CF challenge patterns including Turnstile, checkbox challenges, etc.
+   */
+  function isCloudflareChallengeElement(element) {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return false;
+
+    // Check element classes
+    if (element.classList) {
+      const cfClasses = [
+        'cf-turnstile', 'challenge-form', 'challenge-container',
+        'cb-c', 'cb-lb', 'cb-i', 'cb-lb-t', // CF checkbox classes
+        'cf-challenge', 'cf-wrapper', 'cf-content'
+      ];
+
+      for (const cfClass of cfClasses) {
+        if (element.classList.contains(cfClass)) return true;
+      }
+    }
+
+    // Check element IDs
+    if (element.id) {
+      const cfIdPatterns = [
+        'cf-', 'turnstile', 'challenge', 'content', 'RInW4', // CF specific IDs
+        'verifying', 'success', 'fail', 'expired', 'timeout'
+      ];
+
+      for (const pattern of cfIdPatterns) {
+        if (element.id.includes(pattern)) return true;
+      }
+    }
+
+    // Check for CF-specific attributes
+    if (element.getAttribute('aria-live') === 'polite' ||
+        element.getAttribute('aria-atomic') === 'true' ||
+        element.getAttribute('role') === 'alert') {
+
+      // Verify it's in a CF context
+      const cfContext = element.closest('[class*="cf"], [class*="turnstile"], [class*="challenge"], [id*="cf"], [id*="turnstile"]');
+      if (cfContext) return true;
+    }
+
+    // Check for nested checkbox in CF context
+    if (element.tagName.toLowerCase() === 'label' || element.tagName.toLowerCase() === 'div') {
+      const hasCheckbox = element.querySelector('input[type="checkbox"]');
+      if (hasCheckbox) {
+        // Check if it's in a CF-like structure
+        const cfParent = element.closest('[class*="cb-"], [id*="cf"], [class*="challenge"]');
+        if (cfParent) return true;
+      }
+    }
+
+    //  Enhanced CF child element detection
+    // Check if element is inside a CF container
+    const cfContainer = element.closest('[class*="cb-"], [class*="cf-"], [id*="cf"], [id*="turnstile"], [id*="challenge"], [role="alert"]');
+    if (cfContainer) {
+      const tagName = element.tagName.toLowerCase();
+
+      // CF checkbox input - 任何在CF容器内的复选框都应该被检测
+      if (tagName === 'input' && element.type === 'checkbox') return true;
+
+      // CF label elements - 任何在CF容器内的标签都应该被检测
+      if (tagName === 'label') return true;
+
+      // CF interactive spans - 更宽松的检测条件
+      if (tagName === 'span') {
+        // 有CF相关类名的span
+        if (element.classList && (
+          element.classList.contains('cb-i') ||
+          element.classList.contains('cb-lb-t')
+        )) return true;
+
+        // 包含CF相关文本的span
+        const text = element.textContent?.trim() || '';
+        if (text.includes('确认') || text.includes('验证') || text.includes('真人') ||
+            text.includes('Verify') || text.includes('human') || text.includes('robot')) {
+          return true;
+        }
+
+        // 任何在CF容器内有文本内容的span
+        if (text.length > 0) return true;
+      }
+
+      // CF clickable divs - 更宽松的检测条件
+      if (tagName === 'div') {
+        if (element.classList && (
+          element.classList.contains('cb-c') ||
+          element.classList.contains('cb-lb') ||
+          element.classList.contains('cb-container')
+        )) return true;
+
+        // 有role="alert"的div
+        if (element.getAttribute('role') === 'alert') return true;
+      }
+    }
+
+    // Check for CF branding or links
+    if (element.querySelector && element.querySelector('a[href*="cloudflare.com"]')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Handles the logic for deciding whether to highlight an element and performing the highlight.
    */
   function handleHighlighting(nodeData, node, parentIframe, isParentHighlighted) {
@@ -1365,6 +1609,121 @@
         if (domElement) nodeData.children.push(domElement);
       }
 
+      //  Enhanced iframe detection for CF challenges
+      // Check for iframes that might contain CF challenges
+      const iframes = node.querySelectorAll('iframe');
+      for (const iframe of iframes) {
+        try {
+          // Try to access iframe content (will fail for cross-origin)
+          if (iframe.contentDocument && iframe.contentDocument.body) {
+            const iframeElement = buildDomTree(iframe.contentDocument.body, iframe, false);
+            if (iframeElement) nodeData.children.push(iframeElement);
+          }
+        } catch (e) {
+          // Cross-origin iframe, check if it's a CF challenge iframe
+          const isCFIframe =
+            iframe.title?.includes('Cloudflare') ||
+            iframe.title?.includes('security challenge') ||
+            iframe.title?.includes('Widget containing') ||
+            iframe.title?.includes('challenge') ||
+            iframe.src?.includes('cloudflare') ||
+            iframe.src?.includes('challenges.cloudflare') ||
+            iframe.src?.includes('turnstile') ||
+            iframe.src?.includes('cf-') ||
+            iframe.className?.includes('cf-') ||
+            iframe.className?.includes('turnstile') ||
+            iframe.id?.includes('cf') ||
+            iframe.id?.includes('turnstile') ||
+            // 检查iframe的父容器是否有CF相关类名
+            iframe.closest('[class*="cf-"], [class*="turnstile"], [id*="cf"], [id*="turnstile"]');
+
+          const iframeData = {
+            tagName: 'iframe',
+            attributes: {
+              src: iframe.src || '',
+              id: iframe.id || '',
+              title: iframe.title || '',
+              class: iframe.className || ''
+            },
+            xpath: getXPathTree(iframe, true),
+            children: [],
+            isInteractive: true,
+            interactionType: isCFIframe ? 'cf-iframe' : 'iframe',
+            text: isCFIframe ? 'Cloudflare Security Challenge' : 'Cross-origin iframe'
+          };
+
+          //  For CF iframes, create virtual child elements representing the checkbox
+          if (isCFIframe) {
+            //  创建更精确的CF虚拟复选框元素
+            // 获取iframe的位置信息用于精确定位
+            const iframeRect = iframe.getBoundingClientRect();
+
+            // Create virtual CF checkbox element with precise positioning
+            const virtualCheckbox = {
+              tagName: 'input',
+              attributes: {
+                type: 'checkbox',
+                class: 'cf-turnstile-checkbox virtual-cf-element',
+                'data-virtual': 'true',
+                'data-cf-iframe-id': iframe.id || 'cf-iframe',
+                'data-iframe-src': iframe.src || ''
+              },
+              xpath: getXPathTree(iframe, true) + '/virtual-checkbox',
+              children: [],
+              isInteractive: true,
+              interactionType: 'cf-checkbox',
+              text: '确认您是真人',
+              // 添加位置信息，让AI知道这是CF复选框的精确位置
+              rect: {
+                x: iframeRect.x + 10, // iframe内部偏移
+                y: iframeRect.y + 10,
+                width: Math.max(20, iframeRect.width - 20),
+                height: Math.max(20, iframeRect.height - 20)
+              },
+              // 标记为高优先级CF元素
+              cfPriority: 'high',
+              cfType: 'checkbox'
+            };
+            const checkboxId = `${ID.current++}`;
+            DOM_HASH_MAP[checkboxId] = virtualCheckbox;
+            iframeData.children.push(checkboxId);
+
+            // Create virtual CF container element (clickable area)
+            const virtualContainer = {
+              tagName: 'div',
+              attributes: {
+                class: 'cf-turnstile-container virtual-cf-element',
+                'data-virtual': 'true',
+                'data-cf-iframe-id': iframe.id || 'cf-iframe',
+                role: 'button',
+                'aria-label': '确认您是真人'
+              },
+              xpath: getXPathTree(iframe, true) + '/virtual-container',
+              children: [],
+              isInteractive: true,
+              interactionType: 'cf-container',
+              text: 'Cloudflare 安全验证',
+              // 使用iframe的完整区域作为点击区域
+              rect: {
+                x: iframeRect.x,
+                y: iframeRect.y,
+                width: iframeRect.width,
+                height: iframeRect.height
+              },
+              cfPriority: 'highest',
+              cfType: 'container'
+            };
+            const containerId = `${ID.current++}`;
+            DOM_HASH_MAP[containerId] = virtualContainer;
+            iframeData.children.push(containerId);
+          }
+
+          const id = `${ID.current++}`;
+          DOM_HASH_MAP[id] = iframeData;
+          nodeData.children.push(id);
+        }
+      }
+
       const id = `${ID.current++}`;
       DOM_HASH_MAP[id] = nodeData;
       if (debugMode) PERF_METRICS.nodeMetrics.processedNodes++;
@@ -1408,8 +1767,21 @@
       return null;
     }
 
+    //  CF元素特殊处理 - 在可见性检查之前检查CF元素
+    const isCFElement = (
+      (node.id && (node.id.includes('cf-') || node.id.includes('turnstile') || node.id.includes('challenge'))) ||
+      (node.classList && (
+        node.classList.contains('cf-turnstile') ||
+        node.classList.contains('challenge-form') ||
+        node.classList.contains('cb-c') ||
+        node.classList.contains('cb-lb')
+      )) ||
+      node.getAttribute('aria-live') === 'polite' ||
+      node.getAttribute('role') === 'alert'
+    );
+
     // Early viewport check - only filter out elements clearly outside viewport
-    if (viewportExpansion !== -1) {
+    if (viewportExpansion !== -1 && !isCFElement) { //  CF元素跳过可见性检查
       const rect = getCachedBoundingRect(node); // Keep for initial quick check
       const style = getCachedComputedStyle(node);
 
@@ -1444,14 +1816,6 @@
       isInputElement: false,
       isClickableOnly: false,
     };
-
-    // 调试日志：检查特定元素
-    if (node.id === 'kw' || node.name === 'wd') {
-      console.log(`🔍 [buildDomTree] 检查元素: ${node.tagName} id="${node.id}" name="${node.name}"`);
-      console.log(`🔍 [buildDomTree] isInputElement(node): ${isInputElement(node)}`);
-      console.log(`🔍 [buildDomTree] isClickableOnlyElement(node): ${isClickableOnlyElement(node)}`);
-      console.log(`🔍 [buildDomTree] isInteractiveCandidate(node): ${isInteractiveCandidate(node)}`);
-    }
 
     // 分类元素交互类型
     if (isInputElement(node)) {
@@ -1514,6 +1878,100 @@
           }
         } catch (e) {
           console.warn("Unable to access iframe:", e);
+          //  For cross-origin iframes (like CF), still mark as interactive
+          nodeData.isInteractive = true;
+          nodeData.interactionType = 'iframe';
+        }
+      }
+      //  Enhanced CF challenge container detection
+      else if (
+        // CF challenge containers
+        (node.id && (node.id.includes('cf-') || node.id.includes('turnstile') || node.id.includes('challenge'))) ||
+        (node.classList && (
+          node.classList.contains('cf-turnstile') ||
+          node.classList.contains('challenge-form') ||
+          node.classList.contains('cb-c') ||
+          node.classList.contains('cb-lb')
+        )) ||
+        // Elements with CF-specific attributes
+        node.getAttribute('aria-live') === 'polite' ||
+        node.getAttribute('role') === 'alert'
+      ) {
+        // Force process CF challenge elements even if they seem non-interactive
+        nodeData.isInteractive = true;
+
+        // 为CF容器创建虚拟子元素，确保有可点击的复选框
+        if (node.id === 'cf-turnstile' || node.classList?.contains('cf-turnstile')) {
+          const containerRect = node.getBoundingClientRect();
+
+          // 创建虚拟CF复选框 - 位于容器中心
+          const virtualCFCheckbox = {
+            tagName: 'input',
+            attributes: {
+              type: 'checkbox',
+              class: 'cf-virtual-checkbox',
+              'data-virtual': 'true',
+              'data-cf-container': node.id || 'cf-turnstile'
+            },
+            xpath: getXPathTree(node, true) + '/virtual-cf-checkbox',
+            children: [],
+            isInteractive: true,
+            interactionType: 'cf-checkbox',
+            text: '确认您是真人',
+            rect: {
+              x: containerRect.x + containerRect.width * 0.1,
+              y: containerRect.y + containerRect.height * 0.1,
+              width: containerRect.width * 0.8,
+              height: containerRect.height * 0.8
+            },
+            cfPriority: 'highest',
+            cfType: 'direct-checkbox'
+          };
+          const cfCheckboxId = `${ID.current++}`;
+          DOM_HASH_MAP[cfCheckboxId] = virtualCFCheckbox;
+          nodeData.children.push(cfCheckboxId);
+          console.log(`✅ 创建虚拟CF复选框，ID: ${cfCheckboxId}`);
+
+          // 创建虚拟CF标签
+          const virtualCFLabel = {
+            tagName: 'label',
+            attributes: {
+              class: 'cf-virtual-label',
+              'data-virtual': 'true',
+              'data-cf-container': node.id || 'cf-turnstile',
+              'for': 'cf-virtual-checkbox'
+            },
+            xpath: getXPathTree(node, true) + '/virtual-cf-label',
+            children: [],
+            isInteractive: true,
+            interactionType: 'cf-label',
+            text: '确认您是真人',
+            rect: {
+              x: containerRect.x,
+              y: containerRect.y,
+              width: containerRect.width,
+              height: containerRect.height
+            },
+            cfPriority: 'high',
+            cfType: 'direct-label'
+          };
+          const cfLabelId = `${ID.current++}`;
+          DOM_HASH_MAP[cfLabelId] = virtualCFLabel;
+          nodeData.children.push(cfLabelId);
+          console.log(`✅ 创建虚拟CF标签，ID: ${cfLabelId}`);
+
+          // 标记为CF容器
+          nodeData.cfContainer = true;
+          nodeData.cfType = 'turnstile-container';
+          nodeData.interactionType = 'cf-container';
+        }
+        nodeData.interactionType = 'cf-challenge';
+
+        //  Process all child nodes and ALLOW them to be highlighted independently
+        // This ensures CF checkbox internal elements (input, label, span) get detected
+        for (const child of node.childNodes) {
+          const domElement = buildDomTree(child, parentIframe, nodeWasHighlighted); // Allow child highlighting
+          if (domElement) nodeData.children.push(domElement);
         }
       }
       // Handle rich text editors and contenteditable elements

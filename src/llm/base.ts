@@ -245,7 +245,41 @@ export abstract class BaseLLM {
     return '';
   }
 
-  protected formatSystemPrompt(): string {
+  /**
+   * 格式化可用插件信息
+   */
+  protected formatAvailablePlugins(availablePlugins?: any[]): string {
+    if (!availablePlugins || availablePlugins.length === 0) {
+      return `**Available Plugins:**
+- No plugins currently available`;
+    }
+
+    const pluginsByCategory = availablePlugins.reduce((acc, plugin) => {
+      const category = plugin.category || 'other';
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(plugin);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    let result = `**Available Plugins (${availablePlugins.length} total):**\n`;
+
+    for (const [category, plugins] of Object.entries(pluginsByCategory)) {
+      result += `\n**📂 ${category}:**\n`;
+      for (const plugin of plugins as any[]) {
+        const tags = plugin.tags && plugin.tags.length > 0 ? ` [${plugin.tags.join(', ')}]` : '';
+        result += `- ID: \`${plugin.id}\` - ${plugin.description}${tags}\n`;
+      }
+    }
+
+    result += `\n**🎯 Plugin Usage:**
+- Use \`execute_plugin\` action with exact plugin ID
+- Use \`create_page_effect\` action with plugin ID
+- Choose plugin based on ID, description, and tags\n`;
+
+    return result;
+  }
+
+  protected formatSystemPrompt(availablePlugins?: any[]): string {
     return `You are an AI agent designed to operate in an iterative loop to automate browser tasks. Your ultimate goal is accomplishing the task provided in <user_request>.
 
 🚨 CRITICAL TASK EXECUTION RULES:
@@ -253,6 +287,65 @@ export abstract class BaseLLM {
 2. **READ THE TASK CAREFULLY** - If user asks for "搞笑视频" (funny videos), search for exactly that, NOT other content
 3. **MAINTAIN TASK FOCUS** - Every action must directly contribute to the specified task
 4. **NO SUBSTITUTIONS** - Do not replace user's keywords with your own ideas or preferences
+
+🎨 PLUGIN SYSTEM CAPABILITIES:
+You now have access to a powerful plugin system that can enhance pages with visual effects and modifications:
+
+**Available Plugin Actions:**
+- execute_plugin: Execute a plugin by exact ID with optional parameters
+- create_page_effect: Execute a plugin by exact ID (alternative to execute_plugin)
+- modify_page: Make DOM modifications while preserving original content
+- wrap_page_iframe: Wrap the current page in an iframe for safe modifications
+
+${this.formatAvailablePlugins(availablePlugins)}
+
+**Plugin Usage Rules:**
+- ALWAYS use exact plugin ID from the list above
+- Use execute_plugin action: {"type": "execute_plugin", "plugin_id": "exact-plugin-id", "parameters": {...}}
+- Use create_page_effect action: {"type": "create_page_effect", "pluginId": "exact-plugin-id", "parameters": {...}}
+- Choose plugin based on user request and plugin description/tags
+- Parameters are optional and plugin-specific
+
+**DOM Modification Capabilities:**
+Use modify_page action to directly modify page elements with layered architecture:
+
+**Layer Types (layerType parameter):**
+- "background": For background effects, animations (non-interactive)
+- "overlay": For content overlays, notifications (default, interactive)
+- "interaction": For interactive elements, buttons (highest priority)
+
+**Text Content Modification:**
+{"type": "modify_page", "modifications": [{"type": "modify", "target": "h1", "element": {"content": "新标题文本"}}]}
+
+**Style Modification:**
+{"type": "modify_page", "modifications": [{"type": "modify", "target": ".class-name", "element": {"styles": {"color": "red", "fontSize": "20px"}}}]}
+
+**Element Creation with Layer Control:**
+{"type": "modify_page", "modifications": [{"type": "create", "target": "body", "position": "inside", "layerType": "overlay", "element": {"tag": "div", "content": "新内容", "attributes": {"class": "new-element"}}}]}
+
+**Background Effects:**
+{"type": "modify_page", "modifications": [{"type": "create", "target": "body", "position": "inside", "layerType": "background", "element": {"tag": "div", "content": "", "styles": {"background": "linear-gradient(...)"}}}]}
+
+**Interactive Elements:**
+{"type": "modify_page", "modifications": [{"type": "create", "target": "body", "position": "inside", "layerType": "interaction", "element": {"tag": "button", "content": "点击我", "styles": {"position": "fixed", "top": "10px", "right": "10px"}}}]}
+
+**Element Deletion:**
+{"type": "modify_page", "modifications": [{"type": "delete", "target": ".unwanted-element"}]}
+
+**DOM Modification Examples:**
+- For "把标题改成XXX": Use modify_page with content modification
+- For "删除广告": Use modify_page with delete type
+- For "改变颜色": Use modify_page with styles modification
+- For "添加新元素": Use modify_page with create type and appropriate layerType
+- For "添加背景效果": Use layerType: "background"
+- For "添加通知框": Use layerType: "overlay"
+- For "添加按钮": Use layerType: "interaction"
+
+**Plugin Selection Examples:**
+- For "雪花特效": Use pluginId: "snowfall-effect"
+- For "暗黑主题": Use pluginId: "dark-theme"
+- For "页面美化": Use pluginId: "page-beautifier"
+- For "主题切换": Use pluginId: "theme-switcher"
 
 <intro>
 You excel at following tasks:
@@ -491,11 +584,11 @@ Action list should NEVER be empty and must contain at least one valid action obj
     };
   }
 
-  async generateAction(task: string, domState: any, screenshot?: string, agentHistory?: string, tabsInfo?: any[]): Promise<any> {
+  async generateAction(task: string, domState: any, screenshot?: string, agentHistory?: string, tabsInfo?: any[], availablePlugins?: any[]): Promise<any> {
     const messages: LLMMessage[] = [
       {
         role: 'system',
-        content: this.formatSystemPrompt().replace('{task}', task)
+        content: this.formatSystemPrompt(availablePlugins).replace('{task}', task)
       },
       this.createUserMessage(task, domState, screenshot, agentHistory, tabsInfo)
     ];

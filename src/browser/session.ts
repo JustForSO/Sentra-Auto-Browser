@@ -5,6 +5,7 @@ import { DOMService } from '../dom/service';
 import { Helpers } from '../utils/helpers';
 import { MasterController } from './master-controller';
 import { Config } from '../config';
+import { DownloadManager } from '../utils/download-manager';
 
 /**
  * 浏览器会话管理器 - 浏览器的大管家
@@ -25,6 +26,7 @@ export class BrowserSession {
   private currentTabIndex: number = 0;           // 当前标签页索引
   private masterController: MasterController | null = null;  // 主控制器，增强功能的核心
   private enhancedMode: boolean = false;         // 是否启用增强模式
+  private downloadManager: DownloadManager | null = null;    // 下载管理器
 
   constructor(profile: BrowserProfile = {}) {
     // 设置默认配置，用户可以覆盖这些设置
@@ -66,6 +68,12 @@ export class BrowserSession {
       // Set up event listeners
       this.setupEventListeners();
 
+      // 初始化下载管理器
+      this.downloadManager = new DownloadManager(this.profile.downloadsPath);
+
+      // 设置下载监听器
+      await this.setupDownloadListener();
+
       logger.success('浏览器会话启动成功', 'BrowserSession');
     } catch (error) {
       logger.error('Failed to start browser session', error as Error, 'BrowserSession');
@@ -95,6 +103,11 @@ export class BrowserSession {
       }
     }
 
+    // 确保下载目录存在
+    if (this.profile.downloadsPath) {
+      await this.ensureDownloadsDirectory(this.profile.downloadsPath);
+    }
+
     // 构建启动参数
     const launchOptions = {
       userDataDir: this.profile.userDataDir,
@@ -116,6 +129,9 @@ export class BrowserSession {
       colorScheme: this.profile.colorScheme,
       reducedMotion: this.profile.reducedMotion,
       forcedColors: this.profile.forcedColors,
+      // 下载配置
+      acceptDownloads: this.profile.acceptDownloads !== false,
+      downloadsPath: this.profile.downloadsPath,
     };
 
     try {
@@ -153,6 +169,62 @@ export class BrowserSession {
         throw error;
       }
     }
+  }
+
+  /**
+   * 确保下载目录存在
+   */
+  private async ensureDownloadsDirectory(downloadsPath: string): Promise<void> {
+    const fs = require('fs');
+
+    try {
+      if (!fs.existsSync(downloadsPath)) {
+        fs.mkdirSync(downloadsPath, { recursive: true });
+        logger.info(`📁 创建下载目录: ${downloadsPath}`, 'BrowserSession');
+      }
+    } catch (error: any) {
+      logger.warn(`⚠️ 无法创建下载目录: ${error.message}`, 'BrowserSession');
+    }
+  }
+
+  /**
+   * 设置下载监听器
+   */
+  private async setupDownloadListener(): Promise<void> {
+    if (!this.context || !this.downloadManager) return;
+
+    this.context.on('page', (page: any) => {
+      page.on('download', async (download: any) => {
+        if (this.downloadManager) {
+          await this.downloadManager.handleDownload(download);
+        }
+      });
+    });
+
+    // 为当前页面也设置下载监听器
+    if (this.page) {
+      this.page.on('download', async (download: any) => {
+        if (this.downloadManager) {
+          await this.downloadManager.handleDownload(download);
+        }
+      });
+    }
+  }
+
+
+
+  /**
+   * 📥 获取下载历史
+   */
+  getDownloadHistory() {
+    return this.downloadManager?.getDownloadHistory() || [];
+  }
+
+  /**
+   * 📁 获取下载目录路径
+   */
+  getDownloadsPath(): string {
+    return this.downloadManager?.getDownloadsPath() || Config.getDefaultDownloadsPath();
   }
 
   /**
@@ -200,6 +272,11 @@ export class BrowserSession {
       }
     }
 
+    // 确保下载目录存在
+    if (this.profile.downloadsPath) {
+      await this.ensureDownloadsDirectory(this.profile.downloadsPath);
+    }
+
     // Create context
     this.context = await this.browser.newContext({
       viewport: this.profile.viewport,
@@ -214,6 +291,9 @@ export class BrowserSession {
       colorScheme: this.profile.colorScheme,
       reducedMotion: this.profile.reducedMotion,
       forcedColors: this.profile.forcedColors,
+      // 下载配置
+      acceptDownloads: this.profile.acceptDownloads !== false,
+      downloadsPath: this.profile.downloadsPath,
     });
   }
 

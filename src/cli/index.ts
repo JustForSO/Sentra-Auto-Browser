@@ -10,6 +10,7 @@ import Config from '../config';
 import { logger } from '../utils/logger';
 import { Symbols } from '../utils/symbols';
 
+
 // 创建命令行程序实例
 const program = new Command();
 
@@ -32,11 +33,31 @@ program
   .option('--model <model>', 'LLM 模型名称')
   .option('--temperature <number>', 'LLM 温度参数', '0')
   .option('--debug', '启用调试日志')
+  .option('--enable-plugins', '启用插件系统', true)
+  .option('--disable-plugins', '禁用插件系统')
+  .option('--plugin-test', '测试插件系统')
   .action(async (task: string, options) => {
     try {
       // 如果用户要求调试模式，就开启详细日志
       if (options.debug) {
         process.env.LOG_LEVEL = 'debug';
+      }
+
+      // 处理插件系统选项
+      if (options.disablePlugins) {
+        process.env.ENABLE_PLUGINS = 'false';
+      } else if (options.enablePlugins) {
+        process.env.ENABLE_PLUGINS = 'true';
+      }
+
+      // 如果用户要求测试插件系统
+      if (options.pluginTest) {
+        console.log(chalk.blue('🧪 开始测试插件系统...'));
+        const { PluginRegistry } = await import('../plugins/registry');
+        const registry = new PluginRegistry();
+        await registry.initialize();
+        console.log(chalk.green('✅ 插件系统测试完成'));
+        return;
       }
 
       // 强制使用ASCII符号，确保在各种终端下都能正常显示
@@ -64,6 +85,7 @@ program
         if (options.temperature) {
           llmConfig.temperature = parseFloat(options.temperature);
         }
+        
       } catch (error) {
         const errorIcon = Symbols.getStatus('error');
         console.error(chalk.red(`${errorIcon} AI模型配置错误:`), error instanceof Error ? error.message : String(error));
@@ -175,6 +197,103 @@ program
         console.error(chalk.gray(error.stack));
       }
       
+      process.exit(1);
+    }
+  });
+
+// 插件管理命令
+program
+  .command('plugin')
+  .description('插件系统管理')
+  .option('--list', '列出所有可用插件')
+  .option('--test', '测试插件系统')
+  .option('--info <pluginId>', '显示插件详细信息')
+  .action(async (options) => {
+    try {
+      if (options.test) {
+        console.log(chalk.blue('🧪 开始测试插件系统...'));
+        const { PluginRegistry } = await import('../plugins/registry');
+        const registry = new PluginRegistry();
+        await registry.initialize();
+        console.log(chalk.green('✅ 插件系统测试完成'));
+        return;
+      }
+
+      if (options.list || options.info) {
+        const { PluginRegistry } = await import('../plugins/registry');
+        const registry = new PluginRegistry();
+        await registry.initialize();
+        const manager = registry.getManager();
+
+        if (options.list) {
+          const plugins = manager.getAllPlugins();
+
+          console.log(chalk.blue.bold('\n🔌 可用插件列表\n'));
+          console.log(chalk.gray(`总计: ${plugins.length} 个插件\n`));
+
+          // 按类别分组
+          const byCategory: Record<string, any[]> = {};
+          plugins.forEach(plugin => {
+            const category = plugin.config.category;
+            if (!byCategory[category]) byCategory[category] = [];
+            byCategory[category].push(plugin);
+          });
+
+          for (const [category, categoryPlugins] of Object.entries(byCategory)) {
+            console.log(chalk.yellow(`📂 ${category}: ${categoryPlugins.length} 个插件`));
+
+            for (const plugin of categoryPlugins) {
+              console.log(chalk.gray(`   • ${plugin.config.name} (${plugin.config.id})`));
+              console.log(chalk.gray(`     ${plugin.config.description}`));
+              if (plugin.config.tags && plugin.config.tags.length > 0) {
+                console.log(chalk.gray(`     标签: ${plugin.config.tags.join(', ')}`));
+              }
+              console.log('');
+            }
+          }
+        }
+
+        if (options.info) {
+          const plugins = manager.getAllPlugins();
+          const plugin = plugins.find(p => p.config.id === options.info);
+
+          if (plugin) {
+            const config = plugin.config;
+            console.log(chalk.blue.bold(`\n🔌 插件详情: ${config.name}\n`));
+            console.log(chalk.gray(`ID: ${config.id}`));
+            console.log(chalk.gray(`版本: ${config.version}`));
+            console.log(chalk.gray(`类别: ${config.category}`));
+            console.log(chalk.gray(`作者: ${config.author || '未知'}`));
+            console.log(chalk.gray(`描述: ${config.description}`));
+
+            if (config.tags && config.tags.length > 0) {
+              console.log(chalk.gray(`标签: ${config.tags.join(', ')}`));
+            }
+
+            if (config.permissions && config.permissions.length > 0) {
+              console.log(chalk.gray(`权限: ${config.permissions.join(', ')}`));
+            }
+
+            if (config.parameters && config.parameters.length > 0) {
+              console.log(chalk.gray(`参数: ${config.parameters.map(p => p.name).join(', ')}`));
+            }
+
+            console.log('');
+          } else {
+            console.log(chalk.red(`❌ 未找到插件: ${options.info}`));
+          }
+        }
+        return;
+      }
+
+      // 默认显示插件系统状态
+      console.log(chalk.blue.bold('\n🔌 插件系统状态\n'));
+      console.log(chalk.gray('使用 --list 查看所有插件'));
+      console.log(chalk.gray('使用 --test 测试插件系统'));
+      console.log(chalk.gray('使用 --info <pluginId> 查看插件详情'));
+
+    } catch (error) {
+      console.error(chalk.red('❌ 插件命令执行失败:'), error instanceof Error ? error.message : String(error));
       process.exit(1);
     }
   });

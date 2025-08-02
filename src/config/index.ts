@@ -99,7 +99,19 @@ export class Config {
       colorScheme: process.env.BROWSER_COLOR_SCHEME as 'light' | 'dark' | 'no-preference' | undefined,
       reducedMotion: process.env.BROWSER_REDUCED_MOTION as 'reduce' | 'no-preference' | undefined,
       forcedColors: process.env.BROWSER_FORCED_COLORS as 'active' | 'none' | undefined,
+      // 下载配置
+      acceptDownloads: process.env.BROWSER_ACCEPT_DOWNLOADS !== 'false',
+      downloadsPath: process.env.BROWSER_DOWNLOADS_PATH || this.getDefaultDownloadsPath(),
     };
+  }
+
+  /**
+   * 🔧 获取默认下载路径
+   */
+  static getDefaultDownloadsPath(): string {
+    const path = require('path');
+    // 使用项目根目录下的downloads文件夹
+    return path.join(process.cwd(), 'downloads');
   }
 
   /**
@@ -139,6 +151,7 @@ export class Config {
       maxActionsPerStep: parseInt(process.env.AGENT_MAX_ACTIONS_PER_STEP || '3'),
       useVision: process.env.AGENT_USE_VISION !== 'false',
       temperature: parseFloat(process.env.LLM_TEMPERATURE || '0'),
+      enablePlugins: process.env.ENABLE_PLUGINS !== 'false', // 默认启用插件系统
     };
   }
 

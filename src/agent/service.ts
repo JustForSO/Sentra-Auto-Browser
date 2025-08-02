@@ -9,6 +9,8 @@ import { ReflectionService } from '../reflection/service';
 import { ErrorRecoveryService } from '../recovery/service';
 import { PerformanceMonitoringService } from '../monitoring/service';
 import { MessageManager } from '../message/manager';
+import { PluginManager } from '../plugins/manager';
+import { PluginRegistry } from '../plugins/registry';
 
 /**
  * 智能代理服务 - 浏览器自动化的核心AI大脑
@@ -35,6 +37,8 @@ export class Agent {
   private errorRecoveryService?: ErrorRecoveryService;      // 错误恢复服务，处理异常情况
   private performanceMonitoringService?: PerformanceMonitoringService; // 性能监控，优化执行效率
   private messageManager: MessageManager;                   // 消息管理器，处理与AI的对话
+  private pluginManager?: PluginManager;                    // 插件管理器，扩展功能
+  private pluginRegistry?: PluginRegistry;                  // 插件注册表，管理可用插件
 
   // 代理身份和状态信息
   private agentId: string;              // 代理的唯一标识
@@ -60,7 +64,6 @@ export class Agent {
     this.task = task;
     this.llm = llm;
     this.browserSession = browserSession;
-    this.controller = new Controller(browserSession);
     this.settings = {
       maxSteps: 100, // 增加最大步数，让AI有更多决策空间
       maxActionsPerStep: 3,
@@ -81,6 +84,7 @@ export class Agent {
       enableLoopDetection: true,
       maxConsecutiveFailures: 5,
       maxSimilarActions: 3,
+      enablePlugins: true,
       ...settings,
     };
 
@@ -104,7 +108,10 @@ export class Agent {
     // Initialize message manager
     this.messageManager = new MessageManager(this.task);
 
-    // Initialize advanced services if enabled
+    // 初始化基础Controller（不带插件系统）
+    this.controller = new Controller(this.browserSession);
+
+    // Initialize advanced services if enabled (async initialization will be done in run method)
     this.initializeServices();
   }
 
@@ -120,6 +127,11 @@ export class Agent {
       // 确保浏览器已经准备好
       if (!this.browserSession.isStarted()) {
         await this.browserSession.start();
+      }
+
+      // 确保插件系统已初始化
+      if (!this.pluginManager || !this.pluginRegistry) {
+        await this.initializePluginSystem();
       }
 
       // 执行步骤直到完成或达到最大步数
@@ -162,8 +174,12 @@ export class Agent {
           // 获取所有标签页信息供AI决策
           const tabsInfo = this.browserSession.getAllTabsInfo ? this.browserSession.getAllTabsInfo() : [];
 
+          // 获取可用插件信息
+          const allPlugins = this.pluginRegistry ? this.pluginRegistry.getManager().getAllPlugins() : [];
+          const availablePlugins = allPlugins.map(plugin => plugin.config);
+
           // 从 LLM 获取下一步操作（结构化输出）
-          const agentOutput: AgentOutput = await this.llm.generateAction(this.task, domState, screenshot, agentHistory, tabsInfo);
+          const agentOutput: AgentOutput = await this.llm.generateAction(this.task, domState, screenshot, agentHistory, tabsInfo, availablePlugins);
 
           // 🔍 添加详细日志：打印 AI 返回的原始数据
           logger.info('🔍 AI 返回的完整数据:', 'Agent');
@@ -404,7 +420,7 @@ export class Agent {
   }
 
   // 高级智能体功能
-  private initializeServices(): void {
+  private async initializeServices(): Promise<void> {
     if (this.settings.enableMemory) {
       this.memoryService = new MemoryService(this.settings.memorySize);
     }
@@ -424,6 +440,43 @@ export class Agent {
     if (this.settings.enablePerformanceMonitoring) {
       this.performanceMonitoringService = new PerformanceMonitoringService();
       this.performanceMonitoringService.startMonitoring();
+    }
+
+    // 初始化插件系统（异步，但不等待，在run方法中会确保初始化完成）
+    this.initializePluginSystem();
+  }
+
+  /**
+   * 初始化插件系统
+   */
+  private async initializePluginSystem(): Promise<void> {
+    // 检查是否启用插件系统
+    if (!this.settings.enablePlugins) {
+      logger.info('插件系统已禁用，使用默认Controller', 'Agent');
+      this.controller = new Controller(this.browserSession);
+      return;
+    }
+
+    try {
+      logger.info('初始化插件系统...', 'Agent');
+
+      // 创建插件注册表（它会创建自己的PluginManager）
+      this.pluginRegistry = new PluginRegistry();
+
+      // 初始化插件系统
+      await this.pluginRegistry.initialize();
+
+      // 获取插件管理器实例（确保使用同一个实例）
+      this.pluginManager = this.pluginRegistry.getManager();
+
+      // 重新创建Controller，传入插件系统
+      this.controller = new Controller(this.browserSession, this.pluginManager, this.pluginRegistry);
+
+      logger.info('插件系统初始化完成', 'Agent');
+    } catch (error) {
+      logger.error('插件系统初始化失败', error as Error, 'Agent');
+      // 如果插件系统初始化失败，使用默认Controller
+      this.controller = new Controller(this.browserSession);
     }
   }
 
@@ -650,7 +703,8 @@ export class Agent {
       'hover', 'drag_drop', 'key', 'key_press', 'select', 'upload_file',
       'take_screenshot', 'extract_data', 'execute_script',
       'switch_tab', 'new_tab', 'close_tab', 'go_back', 'go_forward',
-      'refresh', 'set_cookie', 'wait_for_element', 'wait_for_navigation'
+      'refresh', 'set_cookie', 'wait_for_element', 'wait_for_navigation',
+      'execute_plugin', 'create_page_effect', 'modify_page', 'wrap_page_iframe'
     ];
 
     if (!validTypes.includes(action.type)) {
