@@ -142,6 +142,12 @@ export class BrowserSession {
       // 注意：launchPersistentContext 可能不提供 browser 对象
       this.browser = this.context.browser();
 
+      // 初始化下载管理器
+      this.downloadManager = new DownloadManager(this.profile.downloadsPath);
+
+      // 设置下载监听器
+      await this.setupDownloadListener();
+
       logger.success(`✅ 持久化浏览器上下文启动成功`, 'BrowserSession');
 
     } catch (error: any) {
@@ -160,6 +166,12 @@ export class BrowserSession {
 
           this.context = await chromium.launchPersistentContext(this.profile.userDataDir!, retryOptions);
           this.browser = this.context.browser();
+
+          // 初始化下载管理器
+          this.downloadManager = new DownloadManager(this.profile.downloadsPath);
+
+          // 设置下载监听器
+          await this.setupDownloadListener();
 
         } catch (installError) {
           logger.error('浏览器自动安装失败', installError as Error, 'BrowserSession');

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.54.0",
+    "axios": "^1.11.0",
     "chalk": "4.1.2",
     "commander": "9.5.0",
     "dotenv": "16.4.7",

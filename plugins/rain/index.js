@@ -170,7 +170,7 @@ console.log('雨滴特效已成功启动');
 // 返回执行结果
 return {
   success: true,
-  message: \`雨滴特效已启动 - 密度: \${intensity}, 速度: \${speed}, 角度: \${angle}度\`,
+  message: `雨滴特效已启动 - 密度: ${intensity}, 速度: ${speed}, 角度: ${angle}度`,
   data: {
     intensity,
     speed,

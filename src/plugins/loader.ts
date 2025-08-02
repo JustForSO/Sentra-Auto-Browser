@@ -226,7 +226,7 @@ export class FileSystemPluginLoader implements PluginLoader {
     const func = new Function(
       ...Object.keys(sandbox),
       `
-      return (async function() {
+      return (async () => {
         ${scriptContent}
       })();
       `

@@ -186,7 +186,7 @@ console.log('雪花特效已成功启动');
 // 返回执行结果
 return {
   success: true,
-  message: \`雪花特效已启动 - 密度: \${intensity}, 速度: \${speed}, 持续时间: \${duration > 0 ? duration + '秒' : '永久'}\`,
+  message: `雪花特效已启动 - 密度: ${intensity}, 速度: ${speed}, 持续时间: ${duration > 0 ? duration + '秒' : '永久'}`,
   data: {
     intensity,
     speed,
