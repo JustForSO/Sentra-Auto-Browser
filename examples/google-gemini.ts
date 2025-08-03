@@ -9,6 +9,7 @@ async function main() {
       provider: 'google' as const,
       model: 'gemini-1.5-flash', // 使用更快的模型
       apiKey: process.env.GOOGLE_API_KEY!,
+      baseURL: process.env.GOOGLE_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/', // 支持自定义API端点
       temperature: 0,
     };
 
@@ -18,6 +19,7 @@ async function main() {
       console.log('1. 访问 https://aistudio.google.com/app/apikey');
       console.log('2. 创建 API 密钥');
       console.log('3. 在 .env 文件中设置: GOOGLE_API_KEY=你的密钥');
+      console.log('4. (可选) 设置自定义API端点: GOOGLE_BASE_URL=你的代理地址');
       process.exit(1);
     }
 
@@ -40,6 +42,7 @@ async function main() {
     console.log('配置信息:');
     console.log(`  LLM: ${llmConfig.provider} - ${llmConfig.model}`);
     console.log(`  API 密钥: ${llmConfig.apiKey.substring(0, 10)}...`);
+    console.log(`  API 端点: ${llmConfig.baseURL}`);
     console.log(`  浏览器: ${browserProfile.headless ? '无头模式' : '可视模式'}`);
     console.log(`  视觉功能: ${agentSettings.useVision ? '启用' : '禁用'}\n`);
 

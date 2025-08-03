@@ -107,7 +107,8 @@ OPENAI_MODEL=gpt-4o
 
 # Google Gemini配置
 GOOGLE_API_KEY=your_google_api_key
-GOOGLE_MODEL=gemini-1.5-pro
+GOOGLE_MODEL=gemini-2.5-pro
+GOOGLE_BASE_URL=https://generativelanguage.googleapis.com/v1beta/
 
 # Anthropic配置
 ANTHROPIC_API_KEY=your_anthropic_api_key
@@ -374,6 +375,7 @@ import { GoogleLLM } from 'sentra-auto-browser';
 const llm = new GoogleLLM({
   apiKey: 'your-api-key',
   model: 'gemini-2.5-pro',      // 支持长上下文
+  baseURL: 'https://generativelanguage.googleapis.com/v1beta/', // 可自定义API端点
   maxTokens: 4000
 });
 ```
@@ -386,6 +388,46 @@ const llm = new AnthropicLLM({
   apiKey: 'your-api-key',
   model: 'claude-sonnet-4',  // 最新版本
   maxTokens: 4000
+});
+```
+
+### 🌐 API 代理配置
+
+对于国内用户或需要使用代理的场景，可以通过设置自定义 API 端点来解决网络访问问题：
+
+#### OpenAI 代理配置
+```bash
+# .env 文件配置
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_BASE_URL=https://api.openai.com/v1
+# 或使用其他代理服务, 兼容openai格式即可
+OPENAI_BASE_URL=https://api.deepseek.com/v1
+OPENAI_BASE_URL=https://api.moonshot.cn/v1
+```
+
+#### Google Gemini 代理配置
+```bash
+# .env 文件配置
+GOOGLE_API_KEY=your_google_api_key
+GOOGLE_BASE_URL=https://generativelanguage.googleapis.com/v1beta/
+# 或使用其他代理服务，例如
+GOOGLE_BASE_URL=https://api-proxy.me/gemini/v1beta/
+```
+
+#### 代码中直接配置
+```typescript
+// OpenAI 代理配置
+const openaiLLM = new OpenAILLM({
+  apiKey: 'your-api-key',
+  baseURL: 'https://api.openai.com/v1',
+  model: 'gpt-4o'
+});
+
+// Google Gemini 代理配置
+const googleLLM = new GoogleLLM({
+  apiKey: 'your-api-key',
+  baseURL: 'https://generativelanguage.googleapis.com/v1beta/',
+  model: 'gemini-2.5-flash'
 });
 ```
 
@@ -548,9 +590,10 @@ node examples/form-filling.js
 | `OPENAI_BASE_URL` | OpenAI API地址 | `https://api.openai.com/v1` | 自定义API地址 |
 | `OPENAI_MODEL` | OpenAI模型名称 | `gpt-4o` | `gpt-4`, `gpt-3.5-turbo` |
 | `GOOGLE_API_KEY` | Google API密钥 | - | `AIza...` |
-| `GOOGLE_MODEL` | Google模型名称 | `gemini-1.5-pro` | `gemini-1.0-pro` |
+| `GOOGLE_BASE_URL` | Google API地址 | `https://generativelanguage.googleapis.com/v1beta/` | 自定义API地址 |
+| `GOOGLE_MODEL` | Google模型名称 | `gemini-2.5-pro` | `gemini-2.5-flash` |
 | `ANTHROPIC_API_KEY` | Anthropic API密钥 | - | `sk-ant-...` |
-| `ANTHROPIC_MODEL` | Anthropic模型名称 | `claude-3-5-sonnet-20241022` | `claude-3-opus` |
+| `ANTHROPIC_MODEL` | Anthropic模型名称 | `claude-sonnet-4` | `claude-opus-4` |
 | **浏览器配置** |
 | `BROWSER_HEADLESS` | 无头模式 | `true` | `false` |
 | `BROWSER_VIEWPORT_WIDTH` | 浏览器宽度 | `1280` | `1920` |
@@ -850,8 +893,8 @@ npx sentra-auto run "写一篇有创意的文章" \
 | 任务类型 | 推荐模型 | 原因 |
 |----------|----------|------|
 | 简单操作 | `gpt-4o-mini` | 快速、经济 |
-| 复杂逻辑 | `gpt-4o` | 理解能力强 |
-| 创意任务 | `claude-sonnet-4` | 创意性好 |
+| 复杂逻辑 | `gpt-4.1` | 综合能力强 |
+| 创意任务 | `claude-sonnet-4` | 聚合性好 |
 | 快速响应 | `gemini-2.5-flash` | 响应速度快 |
 
 ### 🛡️ 反检测最佳实践

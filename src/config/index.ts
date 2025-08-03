@@ -46,6 +46,7 @@ export class Config {
         provider: 'google',
         model: process.env.GOOGLE_MODEL || 'gemini-2.5-flash',  // 快速响应的Gemini模型
         apiKey: googleKey,
+        baseURL: process.env.GOOGLE_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/',
         temperature: parseFloat(process.env.LLM_TEMPERATURE || '0'),
         maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '4000'),
       };
