@@ -47,7 +47,7 @@ const getProjectRoot = () => {
 // 创建主窗口
 const createWindow = async () => {
   // 确定正确的图标路径
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = !app.isPackaged; // 使用更可靠的方式判断开发/生产
   let iconPath: string;
   
   if (isDev) {
@@ -102,15 +102,22 @@ const createWindow = async () => {
       await mainWindow.loadFile(path.join(__dirname, '../index.html'));
     }
   } else {
-    // 生产模式：加载构建后的文件
-    const indexPath = path.join(__dirname, '../dist-renderer/index.html');
-    if (fs.existsSync(indexPath)) {
-      await mainWindow.loadFile(indexPath);
-      console.log('Loaded production build');
+    // 生产模式：加载构建后的文件（由 Vite 输出到 build/）
+    const prodIndexInBuild = path.join(__dirname, '../build/index.html');
+    const legacyDistRenderer = path.join(__dirname, '../dist-renderer/index.html');
+
+    if (fs.existsSync(prodIndexInBuild)) {
+      await mainWindow.loadFile(prodIndexInBuild);
+      console.log('Loaded production build from build/index.html');
+    } else if (fs.existsSync(legacyDistRenderer)) {
+      // 兼容旧路径
+      await mainWindow.loadFile(legacyDistRenderer);
+      console.log('Loaded production build from dist-renderer/index.html');
     } else {
-      // 回退到开发HTML
-      await mainWindow.loadFile(path.join(__dirname, '../index.html'));
-      console.log('Loaded development HTML');
+      // 兜底：若打包错误，尽力加载同级 index.html（通常不会被包含）
+      const fallbackDevIndex = path.join(__dirname, '../index.html');
+      console.warn('Production index.html not found in build/. Trying fallback:', fallbackDevIndex);
+      await mainWindow.loadFile(fallbackDevIndex);
     }
   }
 
