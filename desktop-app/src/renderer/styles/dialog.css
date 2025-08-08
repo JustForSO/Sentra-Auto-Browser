@@ -1,0 +1,121 @@
+/* 输入对话框样式 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: dialogFadeIn 0.2s ease-out;
+}
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.input-dialog {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  min-width: 400px;
+  max-width: 500px;
+  animation: dialogSlideIn 0.2s ease-out;
+}
+
+@keyframes dialogSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dialog-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e1dfdd;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #323130;
+}
+
+.dialog-body {
+  padding: 20px 24px;
+}
+
+.dialog-body label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #323130;
+  font-weight: 500;
+}
+
+.dialog-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e1dfdd;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #323130;
+  background: #ffffff;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.dialog-input:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 1px rgba(0, 120, 212, 0.2);
+}
+
+.dialog-footer {
+  padding: 16px 24px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dialog-button {
+  padding: 8px 20px;
+  border: 1px solid #e1dfdd;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #323130;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 80px;
+}
+
+.dialog-button:hover {
+  background: #f3f2f1;
+  border-color: #c8c6c4;
+}
+
+.dialog-button.primary {
+  background: #0078d4;
+  color: #ffffff;
+  border-color: #0078d4;
+}
+
+.dialog-button.primary:hover {
+  background: #106ebe;
+  border-color: #106ebe;
+}

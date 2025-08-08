@@ -117,7 +117,21 @@ program
       const visionIcon = Symbols.getSystem('vision');
 
       console.log(chalk.gray(`${taskIcon} 任务: ${task}`));
-      console.log(chalk.gray(`${modelIcon} 模型: ${llmConfig.provider} - ${llmConfig.model}`));
+      
+      // 显示模型信息 - 多供应商配置
+      if (llmConfig.endpoints && llmConfig.endpoints.length > 0) {
+        const primaryEndpoint = llmConfig.endpoints[0];
+        const totalEndpoints = llmConfig.endpoints.length;
+        if (totalEndpoints === 1) {
+          console.log(chalk.gray(`${modelIcon} 模型: ${primaryEndpoint.provider} - ${primaryEndpoint.model}`));
+        } else {
+          console.log(chalk.gray(`${modelIcon} 模型: ${primaryEndpoint.provider} - ${primaryEndpoint.model} (+${totalEndpoints - 1}个备用端点)`));
+        }
+        console.log(chalk.gray(`${Symbols.getSystem('config')} 策略: ${llmConfig.strategy || 'priority'}`));
+      } else {
+        console.log(chalk.gray(`${modelIcon} 模型: 多供应商配置 (${llmConfig.endpoints?.length || 0}个端点)`));
+      }
+      
       console.log(chalk.gray(`${browserIcon} 浏览器: ${browserProfile.headless ? '无头模式' : '可视化模式'}`));
       console.log(chalk.gray(`${visionIcon} 视觉: ${agentSettings.useVision ? '已启用' : '已禁用'}`));
       console.log('');
@@ -141,7 +155,34 @@ program
 
       // 创建智能代理，把AI大脑和浏览器连接起来
       spinner.start('正在创建智能代理...');
-      const agent = new Agent(task, llm, browserSession, agentSettings);
+      
+      // 处理新的增强版LLM系统兼容性
+      let agentLLM;
+      if ('generateResponse' in llm && typeof llm.generateResponse === 'function') {
+        // 如果是增强版LLM，需要创建一个兼容层
+        if ('getStats' in llm) {
+          // 这是增强版LLM，创建一个简单的适配器
+          const { BaseLLM } = await import('../llm/base');
+          agentLLM = new (class extends BaseLLM {
+            async generateResponse(messages: any[], useStructuredOutput?: boolean) {
+              return (llm as any).generateResponse(messages, useStructuredOutput);
+            }
+          })({
+            provider: 'multi-provider' as any,
+            model: 'enhanced',
+            apiKey: 'enhanced',
+            strategy: 'priority' as any,
+            endpoints: []
+          });
+        } else {
+          // 这是传统BaseLLM
+          agentLLM = llm;
+        }
+      } else {
+        throw new Error('无效的LLM实例');
+      }
+      
+      const agent = new Agent(task, agentLLM, browserSession, agentSettings);
       spinner.succeed('智能代理创建完成');
 
       const startIcon = Symbols.getProgress('start');

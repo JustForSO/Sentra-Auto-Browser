@@ -96,13 +96,131 @@ export interface AgentState {
   similarActionCount: number;
 }
 
-export interface LLMConfig {
+// ===========================================
+// 🤖 多供应商LLM配置类型定义
+// ===========================================
+
+/**
+ * LLM使用策略枚举
+ */
+export type LLMStrategy = 
+  | 'round_robin'   // 轮询使用所有可用的API
+  | 'priority'      // 按优先级顺序使用（第一个可用的）
+  | 'load_balance'  // 基于响应时间的负载均衡
+  | 'failover'      // 故障转移，主API失败时切换到备用
+  | 'random';       // 随机选择可用的API
+
+/**
+ * 单个API端点配置
+ */
+export interface LLMEndpoint {
   provider: 'openai' | 'anthropic' | 'google';
-  model: string;
   apiKey: string;
   baseURL?: string;
+  model: string;
+  priority?: number;    // 优先级，数字越小优先级越高
+  weight?: number;      // 权重，用于负载均衡
+  enabled?: boolean;    // 是否启用
+  maxRetries?: number;  // 最大重试次数
+  timeout?: number;     // 请求超时时间
+  rateLimit?: {
+    requests: number;   // 每分钟请求数限制
+    tokens: number;     // 每分钟token数限制
+  };
+  healthCheck?: {
+    lastCheck?: Date;   // 上次健康检查时间
+    status: 'healthy' | 'unhealthy' | 'unknown'; // 健康状态
+    responseTime?: number; // 平均响应时间
+    errorCount?: number;   // 错误计数
+  };
+}
+
+/**
+ * 用户控制选项
+ */
+export interface LLMUserControl {
+  disableHealthCheck?: boolean;    // 禁用健康检查
+  alwaysRetryAll?: boolean;        // 总是重试所有端点
+  enableFallbackMode?: boolean;    // 启用回退模式
+  strictMode?: boolean;            // 严格模式（遇到错误立即停止）
+  debugMode?: boolean;             // 调试模式（输出详细日志）
+  neverDisableEndpoints?: boolean; // 从不禁用端点
+  roundRobinResetInterval?: number; // 轮询重置间隔
+}
+
+/**
+ * 多供应商LLM配置
+ */
+export interface LLMConfig {
+  // 使用策略
+  strategy: LLMStrategy;
+  
+  // 所有可用的API端点
+  endpoints: LLMEndpoint[];
+  
+  // 全局配置
   temperature?: number;
   maxTokens?: number;
+  
+  // 重试配置
+  maxRetries?: number;
+  retryDelay?: number;
+  timeout?: number;
+  
+  // 负载均衡配置
+  loadBalance?: {
+    window: number;           // 统计窗口大小
+    healthCheckInterval: number; // 健康检查间隔
+    failureThreshold: number;    // 失败阈值
+    recoveryThreshold: number;   // 恢复阈值
+  };
+  
+  // 🔧 用户控制选项
+  userControl?: LLMUserControl;
+  
+  // 向后兼容的单一配置
+  provider?: 'openai' | 'anthropic' | 'google';
+  model?: string;
+  apiKey?: string;
+  baseURL?: string;
+}
+
+/**
+ * LLM请求统计信息
+ */
+export interface LLMStats {
+  endpointId: string;
+  provider: string;
+  requestCount: number;
+  successCount: number;
+  errorCount: number;
+  totalResponseTime: number;
+  averageResponseTime: number;
+  lastUsed: Date;
+  tokensUsed: number;
+}
+
+/**
+ * LLM管理器接口
+ */
+export interface LLMManager {
+  // 获取可用的端点
+  getAvailableEndpoints(): LLMEndpoint[];
+  
+  // 根据策略选择端点
+  selectEndpoint(strategy?: LLMStrategy): LLMEndpoint | null;
+  
+  // 健康检查
+  healthCheck(endpoint: LLMEndpoint): Promise<boolean>;
+  
+  // 更新端点状态
+  updateEndpointHealth(endpointId: string, isHealthy: boolean, responseTime?: number): void;
+  
+  // 获取统计信息
+  getStats(): LLMStats[];
+  
+  // 重置统计信息
+  resetStats(): void;
 }
 
 export interface DOMElement {

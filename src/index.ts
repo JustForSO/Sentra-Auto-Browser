@@ -12,7 +12,10 @@ export { SmartTabManager } from './browser/smart-tab-manager';
 export { EnhancedDOMDetector } from './browser/enhanced-dom-detector';
 export { EnhancedKeyHandler } from './browser/enhanced-key-handler';
 
+// LLM系统导出
 export { LLMFactory, BaseLLM, OpenAILLM, AnthropicLLM, GoogleLLM } from './llm/factory';
+export { EnhancedBaseLLM, createEnhancedLLM } from './llm/enhanced-base';
+export { MultiProviderLLMManager, createLLMConfigFromEnv } from './llm/manager';
 
 export { MemoryService } from './memory/service';
 export { PlanningService } from './planning/service';

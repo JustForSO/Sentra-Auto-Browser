@@ -1,5 +1,7 @@
 import { config } from 'dotenv';
-import { LLMConfig, BrowserProfile, AgentSettings } from '../types';
+import { LLMConfig, BrowserProfile, AgentSettings, LLMEndpoint } from '../types';
+import { createLLMConfigFromEnv, MultiProviderLLMManager } from '../llm/manager';
+import { logger } from '../utils/logger';
 
 // 加载环境变量配置
 config();
@@ -15,48 +17,28 @@ config();
 export class Config {
 
   /**
-   * 获取AI模型配置
-   * 会自动检测可用的API密钥并选择对应的模型
+   * 🤖 获取多供应商AI模型配置
+   * 支持多个API密钥、多个端点和智能选择策略
    */
   static getLLMConfig(): LLMConfig {
-    const openaiKey = process.env.OPENAI_API_KEY;
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    const googleKey = process.env.GOOGLE_API_KEY;
-
-    // 优先使用OpenAI，因为它通常效果最好
-    if (openaiKey) {
-      return {
-        provider: 'openai',
-        model: process.env.OPENAI_MODEL || 'gpt-4o',  // 默认使用最新的GPT-4o
-        apiKey: openaiKey,
-        baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
-        temperature: parseFloat(process.env.LLM_TEMPERATURE || '0'),  // 0表示更确定性的输出
-        maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '4000'),    // 足够的token数量
-      };
-    } else if (anthropicKey) {
-      return {
-        provider: 'anthropic',
-        model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4',  // 最新的Claude模型
-        apiKey: anthropicKey,
-        temperature: parseFloat(process.env.LLM_TEMPERATURE || '0'),
-        maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '4000'),
-      };
-    } else if (googleKey) {
-      return {
-        provider: 'google',
-        model: process.env.GOOGLE_MODEL || 'gemini-2.5-flash',  // 快速响应的Gemini模型
-        apiKey: googleKey,
-        baseURL: process.env.GOOGLE_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/',
-        temperature: parseFloat(process.env.LLM_TEMPERATURE || '0'),
-        maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '4000'),
-      };
+    try {
+      // 使用新的多供应商配置系统
+      const multiProviderConfig = createLLMConfigFromEnv();
+      
+      if (multiProviderConfig.endpoints.length > 0) {
+        logger.info(`已加载 ${multiProviderConfig.endpoints.length} 个LLM端点，使用策略: ${multiProviderConfig.strategy}`, 'Config');
+        return multiProviderConfig;
+      }
+      
+      throw new Error('未找到任何LLM配置，请检查环境变量配置');
+      
+    } catch (error) {
+      logger.error('加载LLM配置失败', error as Error, 'Config');
+      throw error;
     }
-
-    // 如果没有找到任何API密钥，抛出友好的错误信息
-    throw new Error(
-      '未找到AI模型API密钥。请在.env文件中设置 OPENAI_API_KEY、ANTHROPIC_API_KEY 或 GOOGLE_API_KEY'
-    );
   }
+
+
 
   // Browser Configuration
   static getBrowserProfile(): BrowserProfile {

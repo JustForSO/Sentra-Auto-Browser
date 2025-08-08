@@ -1,0 +1,57 @@
+{
+  "name": "sentra-desktop",
+  "version": "1.0.0",
+  "description": "Sentra Auto Browser 桌面管理工具",
+  "main": "dist/main.js",
+  "homepage": "./",
+  "scripts": {
+    "dev": "node scripts/start-simple.js",
+    "build": "npm run build:renderer && npm run build:main",
+    "build:renderer": "vite build",
+    "build:main": "tsc",
+    "package": "npm run build && electron-builder",
+    "clean": "rimraf dist build"
+  },
+  "build": {
+    "appId": "com.sentra.desktop",
+    "productName": "Sentra Desktop",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "build/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "@fluentui/react-components": "^9.68.3",
+    "electron-store": "^8.1.0",
+    "highlight.js": "11",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "6",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "cross-env": "^7.0.3",
+    "electron": "25.9.8",
+    "electron-builder": "^24.9.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.3.3",
+    "vite": "^4.5.1"
+  }
+}
