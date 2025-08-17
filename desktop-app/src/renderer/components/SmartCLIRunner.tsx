@@ -284,11 +284,6 @@ const SmartCLIRunner: React.FC = () => {
           : exec
       ));
 
-      // 解析命令
-      const parts = execution.command.split(' ');
-      const cmd = parts[0];
-      const args = parts.slice(1);
-      
       // 模拟进度更新
       const progressInterval = setInterval(() => {
         setExecutions(prev => prev.map(exec => 
@@ -298,7 +293,7 @@ const SmartCLIRunner: React.FC = () => {
         ));
       }, 1000);
 
-      const result = await window.electronAPI.executeCommand(cmd, args);
+      const result = await window.electronAPI.executeCommand(execution.command);
       
       clearInterval(progressInterval);
       

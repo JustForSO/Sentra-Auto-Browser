@@ -1,0 +1,55 @@
+{
+  "id": "page-beautifier",
+  "name": "页面美化器",
+  "version": "1.0.0",
+  "description": "为页面添加美化效果，包括圆角、阴影、渐变背景、动画等，让页面更加美观",
+  "author": "Sentra Auto Browser",
+  "category": "decoration",
+  "tags": ["美化", "装饰", "圆角", "阴影", "渐变", "动画", "beautify", "decoration", "style"],
+  "permissions": ["dom-read", "dom-write", "style-injection"],
+  "parameters": [
+    {
+      "name": "borderRadius",
+      "type": "number",
+      "description": "圆角大小(px)",
+      "default": 8,
+      "required": false,
+      "min": 0,
+      "max": 50
+    },
+    {
+      "name": "shadowIntensity",
+      "type": "number",
+      "description": "阴影强度(0-100)",
+      "default": 30,
+      "required": false,
+      "min": 0,
+      "max": 100
+    },
+    {
+      "name": "gradientBackground",
+      "type": "boolean",
+      "description": "是否添加渐变背景",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "animationEnabled",
+      "type": "boolean",
+      "description": "是否启用动画效果",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "colorScheme",
+      "type": "string",
+      "description": "配色方案",
+      "default": "blue",
+      "required": false,
+      "options": ["blue", "purple", "green", "orange", "pink", "rainbow"]
+    }
+  ],
+  "enabled": true,
+  "autoLoad": false,
+  "priority": 3
+}

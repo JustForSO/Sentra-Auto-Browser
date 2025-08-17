@@ -15,33 +15,39 @@ let apiView: any = null;
 let runningProcesses: Map<string, any> = new Map();
 
 // 获取项目根目录
+// 开发模式: 返回 monorepo 项目根目录
+// 生产模式: 返回 electron resources 下打包进来的 sentra-core（主项目 dist）目录
 const getProjectRoot = () => {
-  // 从 desktop-app/dist 向上两级到 sentra-browser 根目录
-  // 使用 path.resolve 确保路径正确
-  const projectRoot = path.resolve(__dirname, '../..');
-  console.log('Desktop app __dirname:', __dirname);
-  console.log('Calculated project root:', projectRoot);
-  
-  // 验证路径是否正确（检查是否存在 package.json）
-  const packageJsonPath = path.join(projectRoot, 'package.json');
-  if (fs.existsSync(packageJsonPath)) {
-    console.log('Project root verified:', projectRoot);
-    return projectRoot;
-  } else {
-    console.error('Package.json not found at:', packageJsonPath);
-    console.error('Trying alternative path...');
-    // 如果上面的路径不正确，尝试其他可能的路径
-    const altRoot = path.resolve(__dirname, '../../..');
-    const altPackageJsonPath = path.join(altRoot, 'package.json');
-    if (fs.existsSync(altPackageJsonPath)) {
-      console.log('Alternative project root found:', altRoot);
-      return altRoot;
+  try {
+    const isDev = !app.isPackaged;
+    if (isDev) {
+      const devRoot = path.resolve(__dirname, '../..');
+      console.log('[getProjectRoot] dev mode, root =', devRoot);
+      return devRoot;
     }
+
+    // packaged: 推导 resources 目录
+    const resourcesRoot = path.join(path.dirname(app.getPath('exe')), 'resources');
+    const sentraCore = path.join(resourcesRoot, 'sentra-core');
+    if (fs.existsSync(sentraCore)) {
+      console.log('[getProjectRoot] prod mode, sentra-core =', sentraCore);
+      return sentraCore;
+    }
+    // 兼容 asar 解包目录
+    const unpacked = path.join(resourcesRoot, 'app.asar.unpacked', 'sentra-core');
+    if (fs.existsSync(unpacked)) {
+      console.log('[getProjectRoot] prod mode, found asar.unpacked sentra-core =', unpacked);
+      return unpacked;
+    }
+    // 兜底: 某些环境可能未按预期布局
+    const fallback = path.resolve(path.dirname(app.getPath('exe')), 'resources', 'sentra-core');
+    console.warn('[getProjectRoot] sentra-core not found, fallback =', fallback);
+    return fallback;
+  } catch (e) {
+    const fallback = path.resolve(__dirname, '../..');
+    console.warn('[getProjectRoot] error, fallback to', fallback, e);
+    return fallback;
   }
-  
-  // 如果都找不到，返回默认路径
-  console.warn('Using default project root:', projectRoot);
-  return projectRoot;
 };
 
 // 创建主窗口
@@ -630,8 +636,8 @@ ipcMain.handle('check-env-health', async () => {
 // 文件系统相关处理
 ipcMain.handle('fs:readDirectory', async (_: any, dirPath: string) => {
   try {
-    // 获取项目根目录（从desktop-app/dist回到项目根目录）
-    const projectRoot = path.resolve(__dirname, '..', '..');
+    // 获取项目根目录（开发：仓库根；生产：resources/sentra-core）
+    const projectRoot = getProjectRoot();
     
     // 处理相对路径
     let fullDirPath: string;
@@ -686,7 +692,7 @@ ipcMain.handle('fs:readDirectory', async (_: any, dirPath: string) => {
 ipcMain.handle('fs:readFile', async (_: any, filePath: string) => {
   try {
     // 获取项目根目录
-    const projectRoot = path.resolve(__dirname, '..', '..');
+    const projectRoot = getProjectRoot();
     
     // 处理路径
     let fullFilePath;
@@ -712,7 +718,7 @@ ipcMain.handle('fs:readFile', async (_: any, filePath: string) => {
 ipcMain.handle('fs:readFileBase64', async (_: any, filePath: string) => {
   try {
     // 获取项目根目录
-    const projectRoot = path.resolve(__dirname, '..', '..');
+    const projectRoot = getProjectRoot();
     let fullFilePath;
     if (filePath.startsWith('../')) {
       const relativePath = filePath.substring(3);
@@ -733,7 +739,7 @@ ipcMain.handle('fs:readFileBase64', async (_: any, filePath: string) => {
 ipcMain.handle('fs:writeFile', async (_: any, filePath: string, content: string) => {
   try {
     // 获取项目根目录
-    const projectRoot = path.resolve(__dirname, '..', '..');
+    const projectRoot = getProjectRoot();
     
     // 处理路径
     let fullFilePath;
@@ -941,14 +947,53 @@ ipcMain.handle('execute-command', async (event: any, command: string) => {
   let mainCommand: string;
   let args: string[];
   
+  // 安全拆分函数：保留双引号/单引号中的空格
+  const splitArgsSafely = (cmd: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let quote: '"' | "'" | null = null;
+    for (let i = 0; i < cmd.length; i += 1) {
+      const ch = cmd[i];
+      if (quote) {
+        if (ch === quote) {
+          quote = null;
+        } else {
+          current += ch;
+        }
+      } else if (ch === '"' || ch === "'") {
+        quote = ch as any;
+      } else if (ch === ' ') {
+        if (current) {
+          result.push(current);
+          current = '';
+        }
+      } else {
+        current += ch;
+      }
+    }
+    if (current) result.push(current);
+    return result;
+  };
+
   if (command.startsWith('npx sentra-auto')) {
     // 使用 node 直接执行编译后的CLI文件
     mainCommand = 'node';
     const commandWithoutNpx = command.replace('npx sentra-auto', '').trim();
-    args = ['dist/cli/index.js', ...commandWithoutNpx.split(' ').filter(arg => arg.length > 0)];
+    const extraArgs = splitArgsSafely(commandWithoutNpx);
+
+    // 根据是否打包，定位 CLI 入口
+    const isDevEnv = !app.isPackaged;
+    const resourcesRoot = path.join(path.dirname(app.getPath('exe')), 'resources');
+    const prodCliCandidateA = path.join(resourcesRoot, 'sentra-core', 'cli', 'index.js');
+    const prodCliCandidateB = path.join(resourcesRoot, 'app.asar.unpacked', 'sentra-core', 'cli', 'index.js');
+    const cliEntry = isDevEnv
+      ? path.join(projectRoot, 'dist', 'cli', 'index.js')
+      : (fs.existsSync(prodCliCandidateA) ? prodCliCandidateA : prodCliCandidateB);
+
+    args = [cliEntry, ...extraArgs];
   } else {
-    // 其他命令保持原有逻辑
-    const commandParts = command.split(' ');
+    // 其他命令使用安全拆分，避免路径/参数中空格导致的问题
+    const commandParts = splitArgsSafely(command.trim());
     mainCommand = commandParts[0];
     args = commandParts.slice(1);
   }
@@ -959,19 +1004,18 @@ ipcMain.handle('execute-command', async (event: any, command: string) => {
   console.log('参数列表:', JSON.stringify(args, null, 2));
   console.log('工作目录:', projectRoot);
   
-  // 检查CLI文件是否存在
-  if (args.length > 0 && args[0] === 'dist/cli/index.js') {
-    const cliPath = path.join(projectRoot, args[0]);
+  // 检查CLI文件是否存在（仅在sentra-auto场景）
+  if (command.startsWith('npx sentra-auto')) {
+    const cliPath = args[0];
     console.log('CLI文件路径:', cliPath);
     console.log('CLI文件是否存在:', fs.existsSync(cliPath));
-    
     if (!fs.existsSync(cliPath)) {
-      console.error('CLI文件不存在，请先构建项目');
+      console.error('CLI文件不存在，请先构建主项目');
       return {
         processId,
         code: -1,
         output: '',
-        errorOutput: 'CLI文件不存在，请先运行 npm run build 构建项目',
+        errorOutput: 'CLI文件不存在：开发模式下请在仓库根运行 npm run build；打包模式下请确认 extraResources 已包含主项目 dist',
         success: false
       };
     }
@@ -980,10 +1024,30 @@ ipcMain.handle('execute-command', async (event: any, command: string) => {
   
   try {
     // 使用 spawn 来执行命令，以便实时获取输出
+    // 修正 Windows shell/路径
+    const defaultComspec = process.env.ComSpec || process.env.COMSPEC || 'C\\\Windows\\\System32\\\cmd.exe';
+    const ensuredPath = (() => {
+      const p = process.env.PATH || '';
+      return p.toLowerCase().includes('\\windows\\system32') ? p : `C\\Windows\\System32;${p}`;
+    })();
+
+    // 运行时的 node_modules 路径，打包后用于解析 CLI 依赖
+    const runtimeNodeModules = (() => {
+      const isDevEnv = !app.isPackaged;
+      if (isDevEnv) {
+        return path.join(projectRoot, 'node_modules');
+      }
+      const resourcesRoot = path.join(path.dirname(app.getPath('exe')), 'resources');
+      return path.join(resourcesRoot, 'sentra-core', 'node_modules');
+    })();
+
+    const isWindows = process.platform === 'win32';
     const childProcess = spawn(mainCommand, args, {
       cwd: projectRoot,
       stdio: ['pipe', 'pipe', 'pipe'],
-      shell: process.platform === 'win32',
+      // 对于我们自己用 node 执行 CLI 的场景，禁用 shell 能避免空格路径解析问题
+      // 其他普通命令仍然让 Node 直跑（不依赖 cmd.exe）更稳妥
+      shell: false,
       env: {
         ...process.env,
         // 设置中文编码支持
@@ -992,10 +1056,15 @@ ipcMain.handle('execute-command', async (event: any, command: string) => {
         LC_CTYPE: 'zh_CN.UTF-8',
         // Windows 特定设置
         CHCP: '65001', // Windows UTF-8 编码
+        ComSpec: defaultComspec,
+        COMSPEC: defaultComspec,
+        PATH: ensuredPath,
+        NODE_PATH: `${runtimeNodeModules}${path.delimiter}${process.env.NODE_PATH || ''}`,
         PYTHONIOENCODING: 'utf-8',
         // Node.js 设置
         NODE_NO_WARNINGS: '1',
-        NODE_OPTIONS: '--max-old-space-size=4096'
+        NODE_OPTIONS: '--max-old-space-size=4096 --preserve-symlinks',
+        NODE_ENV: app.isPackaged ? 'production' : (process.env.NODE_ENV || 'development')
       }
     });
     
@@ -1736,7 +1805,7 @@ ipcMain.handle('browser:stopMonitoring', async () => {
 });
 
 // 终止浏览器进程
-ipcMain.handle('browser:killProcess', async (event: import('electron').IpcMainInvokeEvent, pid: number) => {
+ipcMain.handle('browser:killProcess', async (event: any, pid: number) => {
   const { exec } = require('child_process');
   const util = require('util');
   const execAsync = util.promisify(exec);
@@ -1821,7 +1890,7 @@ const addBrowserLog = (level: 'info' | 'warn' | 'error' | 'debug', source: strin
 };
 
 // 获取浏览器日志
-ipcMain.handle('browser:getLogs', async (event: import('electron').IpcMainInvokeEvent, level?: 'info' | 'warn' | 'error' | 'debug') => {
+ipcMain.handle('browser:getLogs', async (event: any, level?: 'info' | 'warn' | 'error' | 'debug') => {
   // 初始化一些示例日志（如果没有日志）
   if (browserLogs.length === 0) {
     addBrowserLog('info', 'System', '浏览器监控系统已启动');

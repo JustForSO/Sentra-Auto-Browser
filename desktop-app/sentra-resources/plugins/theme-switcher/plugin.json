@@ -1,0 +1,39 @@
+{
+  "id": "theme-switcher",
+  "name": "智能主题切换器",
+  "version": "1.0.0",
+  "description": "智能检测页面当前主题并切换到相反主题，支持亮色/暗色主题自动切换",
+  "author": "Sentra Auto Browser",
+  "category": "utility",
+  "tags": ["theme", "主题", "切换", "switch", "toggle", "智能", "自动", "亮色", "暗色"],
+  "permissions": ["dom-read", "dom-write", "style-injection"],
+  "parameters": [
+    {
+      "name": "autoDetect",
+      "type": "boolean",
+      "description": "是否自动检测当前主题",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "targetTheme",
+      "type": "string",
+      "description": "目标主题 (light/dark/auto)",
+      "default": "auto",
+      "required": false,
+      "options": ["light", "dark", "auto"]
+    },
+    {
+      "name": "animationDuration",
+      "type": "number",
+      "description": "切换动画持续时间(毫秒)",
+      "default": 300,
+      "required": false,
+      "min": 0,
+      "max": 2000
+    }
+  ],
+  "enabled": true,
+  "autoLoad": false,
+  "priority": 5
+}

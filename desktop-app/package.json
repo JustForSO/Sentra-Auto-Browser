@@ -6,10 +6,11 @@
   "homepage": "./",
   "scripts": {
     "dev": "node scripts/start-simple.js",
-    "build": "npm run build:renderer && npm run build:main",
+    "build": "pnpm run build:renderer && pnpm run build:main",
     "build:renderer": "vite build",
     "build:main": "tsc",
-    "package": "npm run build && electron-builder",
+    "prepackage": "node scripts/prepackage.cjs",
+    "package": "pnpm run build && electron-builder",
     "clean": "rimraf dist build"
   },
   "build": {
@@ -22,8 +23,32 @@
       "dist/**/*",
       "build/**/*",
       "assets/**/*",
-      "node_modules/**/*"
+      "resources/**/*",
+      "sentra-resources/**/*",
+      "node_modules/**/*",
+      "index.html"
     ],
+    "extraResources": [
+      {
+        "from": "../dist",
+        "to": "sentra-core",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../plugins",
+        "to": "sentra-core/plugins",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../docs",
+        "to": "sentra-core/docs",
+        "filter": ["**/*"]
+      }
+    ],
+    "asarUnpack": [
+      "sentra-core/**"
+    ],
+    "afterPack": "./scripts/afterPack.cjs",
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"

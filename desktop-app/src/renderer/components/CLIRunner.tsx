@@ -246,7 +246,7 @@ const CLIRunner: React.FC = () => {
     return `${template.command} ${args.join(' ')}`;
   };
 
-  // 执行命令
+  // 执行命令（直接把完整命令字符串传给后端，避免空格/引号被错误拆分）
   const executeCommand = async (command: string) => {
     const executionId = Date.now().toString();
     const execution: ExecutionResult = {
@@ -262,12 +262,7 @@ const CLIRunner: React.FC = () => {
     setIsExecuting(true);
     
     try {
-      // 解析命令
-      const parts = command.split(' ');
-      const cmd = parts[0];
-      const args = parts.slice(1);
-      
-      const result = await window.electronAPI.executeCommand(cmd, args);
+      const result = await window.electronAPI.executeCommand(command);
       
       setExecutions(prev => prev.map(exec => 
         exec.id === executionId 

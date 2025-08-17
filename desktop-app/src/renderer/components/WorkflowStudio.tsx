@@ -1750,7 +1750,7 @@ const WorkflowStudio: React.FC = () => {
       } : null);
       
       try {
-        // 使用 Electron 的 IPC 来执行命令
+        // 使用 Electron 的 IPC 来执行完整命令
         const result = await window.electronAPI?.executeCommand(command);
         
         if (result?.success) {
