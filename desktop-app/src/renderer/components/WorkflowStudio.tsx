@@ -1,8 +1,143 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import {
-  BrowserIcon, DataIcon, OutputIcon, PlayIcon, PauseIcon, SettingsIcon,
-  ZoomInIcon, ZoomOutIcon, LogIcon, DesignIcon, ExecuteIcon, AddIcon, DeleteIcon
-} from '../assets/icons';
+
+// 简化图标组件，避免导入错误
+const PlayIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M8 5v14l11-7z"/>
+  </svg>
+);
+
+const PauseIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+  </svg>
+);
+
+const StopIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M6 6h12v12H6z"/>
+  </svg>
+);
+
+const SettingsIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+  </svg>
+);
+
+const DataIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+  </svg>
+);
+
+const BrowserIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M16.36,14C16.44,13.34 16.5,12.68 16.5,12C16.5,11.32 16.44,10.66 16.36,10H19.74C19.9,10.64 20,11.31 20,12C20,12.69 19.9,13.36 19.74,14M14.59,19.56C15.19,18.45 15.65,17.25 15.97,16H18.92C17.96,17.65 16.43,18.93 14.59,19.56M14.34,14H9.66C9.56,13.34 9.5,12.68 9.5,12C9.5,11.32 9.56,10.65 9.66,10H14.34C14.43,10.65 14.5,11.32 14.5,12C14.5,12.68 14.43,13.34 14.34,14M12,19.96C11.17,18.76 10.5,17.43 10.09,16H13.91C13.5,17.43 12.83,18.76 12,19.96M8,8H5.08C6.03,6.34 7.57,5.06 9.4,4.44C8.8,5.55 8.35,6.75 8,8M5.08,16H8C8.35,17.25 8.8,18.45 9.4,19.56C7.57,18.93 6.03,17.65 5.08,16M4.26,14C4.1,13.36 4,12.69 4,12C4,11.31 4.1,10.64 4.26,10H7.64C7.56,10.66 7.5,11.32 7.5,12C7.5,12.68 7.56,13.34 7.64,14M12,4.03C12.83,5.23 13.5,6.57 13.91,8H10.09C10.5,6.57 11.17,5.23 12,4.03M18.92,8H15.97C15.65,6.75 15.19,5.55 14.59,4.44C16.43,5.07 17.96,6.34 18.92,8M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+  </svg>
+);
+
+const RobotIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7H14A7,7 0 0,1 21,14H22A1,1 0 0,1 23,15V18A1,1 0 0,1 22,19H21V20A2,2 0 0,1 19,22H5A2,2 0 0,1 3,20V19H2A1,1 0 0,1 1,18V15A1,1 0 0,1 2,14H3A7,7 0 0,1 10,7H11V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2M7.5,13A2.5,2.5 0 0,0 5,15.5A2.5,2.5 0 0,0 7.5,18A2.5,2.5 0 0,0 10,15.5A2.5,2.5 0 0,0 7.5,13M16.5,13A2.5,2.5 0 0,0 14,15.5A2.5,2.5 0 0,0 16.5,18A2.5,2.5 0 0,0 19,15.5A2.5,2.5 0 0,0 16.5,13Z"/>
+  </svg>
+);
+
+const TerminalIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M20,19V7H4V19H20M20,3A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5C2,3.89 2.9,3 4,3H20M13,17V15H18V17H13M9.58,13L5.57,9H8.4L11.7,12.3C12.09,12.69 12.09,13.33 11.7,13.72L8.42,17H5.59L9.58,13Z"/>
+  </svg>
+);
+
+const ExecuteIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M8.5,8.64L13.77,12L8.5,15.36V8.64M6.5,5V19L17.5,12"/>
+  </svg>
+);
+
+const LogIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+  </svg>
+);
+
+const AddIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
+  </svg>
+);
+
+const DeleteIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+  </svg>
+);
+
+const DesignIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M12,2C13.1,2 14,2.9 14,4C14,5.1 13.1,6 12,6C10.9,6 10,5.1 10,4C10,2.9 10.9,2 12,2M21,9V7L15,1H5C3.89,1 3,1.89 3,3V21A2,2 0 0,0 5,23H19A2,2 0 0,0 21,21V9M19,9H14V4H5V21H19V9Z"/>
+  </svg>
+);
+
+const ZoomInIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M15.5,14L20.5,19L19,20.5L14,15.5V14.71L13.73,14.43C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.43,13.73L14.71,14H15.5M9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14M12,10H10V12H9V10H7V9H9V7H10V9H12V10Z"/>
+  </svg>
+);
+
+const ZoomOutIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M15.5,14L20.5,19L19,20.5L14,15.5V14.71L13.73,14.43C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.43,13.73L14.71,14H15.5M9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14M7,9H12V10H7V9Z"/>
+  </svg>
+);
+
+const DatabaseIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M12,3C7.58,3 4,4.79 4,7C4,9.21 7.58,11 12,11C16.42,11 20,9.21 20,7C20,4.79 16.42,3 12,3M4,9V12C4,14.21 7.58,16 12,16C16.42,16 20,14.21 20,12V9C20,11.21 16.42,13 12,13C7.58,13 4,11.21 4,9M4,14V17C4,19.21 7.58,21 12,21C16.42,21 20,19.21 20,17V14C20,16.21 16.42,18 12,18C7.58,18 4,16.21 4,14Z"/>
+  </svg>
+);
+
+const DownloadIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
+  </svg>
+);
+
+const EyeIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+  </svg>
+);
+
+const EyeOffIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.09L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z"/>
+  </svg>
+);
+
+const DebugIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M20,8H17.19C16.74,7.22 16.12,6.55 15.37,6.04L17,4.41L15.59,3L13.42,5.17C12.96,5.06 12.49,5 12,5C11.51,5 11.04,5.06 10.59,5.17L8.41,3L7,4.41L8.62,6.04C7.88,6.55 7.26,7.22 6.81,8H4V10H6.09C6.04,10.33 6,10.66 6,11V12H4V14H6V15C6,15.34 6.04,15.67 6.09,16H4V18H6.81C7.85,19.79 9.78,21 12,21C14.22,21 16.15,19.79 17.19,18H20V16H17.91C17.96,15.67 18,15.34 18,15V14H20V12H18V11C18,10.66 17.96,10.33 17.91,10H20V8M16,15A4,4 0 0,1 12,19A4,4 0 0,1 8,15V11A4,4 0 0,1 12,7A4,4 0 0,1 16,11V15M10,9A1,1 0 0,0 9,10A1,1 0 0,0 10,11A1,1 0 0,0 11,10A1,1 0 0,0 10,9M14,9A1,1 0 0,0 13,10A1,1 0 0,0 14,11A1,1 0 0,0 15,10A1,1 0 0,0 14,9M12,14C12.69,14 13.34,14.16 13.93,14.43L12,16.36L10.07,14.43C10.66,14.16 11.31,14 12,14Z"/>
+  </svg>
+);
+
+const PluginIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M16.24,3.56L14.83,5L16.41,6.56L17.82,5.15L16.24,3.56M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,4L15.76,7.76L14.34,9.17L12,6.83L9.66,9.17L8.24,7.76L12,4M21,13V11H18V13H21M16.76,18.44L18.17,17L16.41,15.44L15,16.85L16.76,18.44M16.76,18.44L18.17,17L16.41,15.44L15,16.85L16.76,18.44M12,18.17L14.34,15.83L15.76,17.24L12,21L8.24,17.24L9.66,15.83L12,18.17M3,13V11H6V13H3M7.24,18.44L8.66,17L7.24,15.56L5.83,17L7.24,18.44Z"/>
+  </svg>
+);
+
+const NoPluginIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M22.11 21.46L2.39 1.73L1.11 3L4.27 6.11C4.17 6.26 4.06 6.4 3.96 6.55C3.86 6.71 3.77 6.87 3.69 7.04C3.61 7.2 3.54 7.37 3.48 7.54C3.42 7.71 3.37 7.88 3.33 8.06C3.29 8.24 3.26 8.42 3.24 8.6C3.22 8.78 3.21 8.96 3.21 9.15V14.85C3.21 15.04 3.22 15.22 3.24 15.4C3.26 15.58 3.29 15.76 3.33 15.94C3.37 16.12 3.42 16.29 3.48 16.46C3.54 16.63 3.61 16.8 3.69 16.96C3.77 17.13 3.86 17.29 3.96 17.45C4.06 17.6 4.17 17.74 4.27 17.89L20.84 21.46L22.11 21.46M20.73 17.89C20.83 17.74 20.94 17.6 21.04 17.45C21.14 17.29 21.23 17.13 21.31 16.96C21.39 16.8 21.46 16.63 21.52 16.46C21.58 16.29 21.63 16.12 21.67 15.94C21.71 15.76 21.74 15.58 21.76 15.4C21.78 15.22 21.79 15.04 21.79 14.85V9.15C21.79 8.96 21.78 8.78 21.76 8.6C21.74 8.42 21.71 8.24 21.67 8.06C21.63 7.88 21.58 7.71 21.52 7.54C21.46 7.37 21.39 7.2 21.31 7.04C21.23 6.87 21.14 6.71 21.04 6.55C20.94 6.4 20.83 6.26 20.73 6.11L20.73 17.89Z"/>
+  </svg>
+);
+
+const OutputIcon = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/>
+  </svg>
+);
 
 // 添加CSS样式支持骨架式连线效果
 const workflowStyles = `
@@ -146,8 +281,117 @@ interface WorkflowExecution {
   endTime?: Date;
 }
 
-// 基于项目CLI参数的细粒度节点模板
+// 基于项目CLI参数的细粒度节点模板 - 完全独立于env文件
 const nodeTemplates: Record<string, Omit<WorkflowNode, 'id' | 'position'>[]> = {
+  '[CONFIG] 配置': [{
+    type: 'openai-config',
+    name: 'OpenAI配置',
+    description: '配置OpenAI API密钥和模型',
+    icon: <SettingsIcon size={16} color="white" />,
+    color: '#10b981',
+    size: { width: 250, height: 180 },
+    inputs: [],
+    outputs: [{
+      id: 'openai_config_output',
+      name: 'OpenAI配置',
+      type: 'output',
+      dataType: 'object'
+    }],
+    config: {
+      apiKey: '',
+      baseURL: 'https://api.openai.com/v1',
+      model: 'gpt-4',
+      temperature: 0,
+      maxTokens: 4000
+    }
+  }, {
+    type: 'anthropic-config',
+    name: 'Anthropic配置',
+    description: '配置Anthropic API密钥和模型',
+    icon: <SettingsIcon size={16} color="white" />,
+    color: '#f97316',
+    size: { width: 250, height: 180 },
+    inputs: [],
+    outputs: [{
+      id: 'anthropic_config_output',
+      name: 'Anthropic配置',
+      type: 'output',
+      dataType: 'object'
+    }],
+    config: {
+      apiKey: '',
+      baseURL: 'https://api.anthropic.com',
+      model: 'claude-3-5-sonnet-20241022',
+      temperature: 0,
+      maxTokens: 4000
+    }
+  }, {
+    type: 'google-config',
+    name: 'Google配置',
+    description: '配置Google Gemini API密钥和模型',
+    icon: <SettingsIcon size={16} color="white" />,
+    color: '#3b82f6',
+    size: { width: 250, height: 180 },
+    inputs: [],
+    outputs: [{
+      id: 'google_config_output',
+      name: 'Google配置',
+      type: 'output',
+      dataType: 'object'
+    }],
+    config: {
+      apiKey: '',
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta',
+      model: 'gemini-2.5-pro',
+      temperature: 0,
+      maxTokens: 4000
+    }
+  }, {
+    type: 'browser-config',
+    name: '浏览器配置',
+    description: '配置浏览器启动参数',
+    icon: <BrowserIcon size={16} color="white" />,
+    color: '#8b5cf6',
+    size: { width: 250, height: 200 },
+    inputs: [],
+    outputs: [{
+      id: 'browser_config_output',
+      name: '浏览器配置',
+      type: 'output',
+      dataType: 'object'
+    }],
+    config: {
+      headless: false,
+      viewportWidth: 1280,
+      viewportHeight: 720,
+      timeout: 30000,
+      userDataDir: './user-data',
+      executablePath: '',
+      locale: 'zh-CN',
+      timezone: 'Asia/Shanghai'
+    }
+  }, {
+    type: 'agent-config',
+    name: '代理配置',
+    description: '配置AI代理行为参数',
+    icon: <RobotIcon size={16} color="white" />,
+    color: '#ec4899',
+    size: { width: 250, height: 160 },
+    inputs: [],
+    outputs: [{
+      id: 'agent_config_output',
+      name: '代理配置',
+      type: 'output',
+      dataType: 'object'
+    }],
+    config: {
+      maxSteps: 50,
+      maxActionsPerStep: 3,
+      useVision: true,
+      debug: false,
+      enablePlugins: true
+    }
+  }],
   '[START] 开始': [{
     type: 'start',
     name: '开始节点',
@@ -180,7 +424,7 @@ const nodeTemplates: Record<string, Omit<WorkflowNode, 'id' | 'position'>[]> = {
       dataType: 'string'
     }],
     config: {
-      task: '请输入要执行的任务描述，例如：bilibili搜索阴阳师须佐之男，并且播放人气高的视频，然后点赞'
+      task: '访问百度并搜索天气'
     }
   }],
   
@@ -469,69 +713,43 @@ const nodeTemplates: Record<string, Omit<WorkflowNode, 'id' | 'position'>[]> = {
     }
   }],
   
-  '[OUTPUT] 输出': [{
-    type: 'command-output',
+  '[CLI] 命令生成器': [{
+    type: 'cli-command-generator',
     name: 'CLI命令生成器',
-    description: '生成最终的CLI命令并执行',
-    icon: <OutputIcon size={16} color="white" />,
-    color: '#6b7280',
-    size: { width: 280, height: 200 },
+    description: '根据配置节点动态生成CLI命令和环境变量',
+    icon: <TerminalIcon size={16} color="white" />,
+    color: '#6366f1',
+    size: { width: 300, height: 400 },
     inputs: [{
       id: 'task_input',
       name: 'task',
       type: 'input',
-      dataType: 'string',
-      required: true
-    }, {
-      id: 'provider_input',
-      name: 'provider',
-      type: 'input',
       dataType: 'string'
     }, {
-      id: 'model_input',
-      name: 'model',
+      id: 'openai_config_input',
+      name: 'openai-config',
       type: 'input',
-      dataType: 'string'
+      dataType: 'object'
     }, {
-      id: 'steps_input',
-      name: 'max-steps',
+      id: 'anthropic_config_input',
+      name: 'anthropic-config',
       type: 'input',
-      dataType: 'number'
+      dataType: 'object'
     }, {
-      id: 'temperature_input',
-      name: 'temperature',
+      id: 'google_config_input',
+      name: 'google-config',
       type: 'input',
-      dataType: 'number'
+      dataType: 'object'
     }, {
-      id: 'headless_input',
-      name: 'headless',
+      id: 'browser_config_input',
+      name: 'browser-config',
       type: 'input',
-      dataType: 'boolean'
+      dataType: 'object'
     }, {
-      id: 'visible_input',
-      name: 'visible',
+      id: 'agent_config_input',
+      name: 'agent-config',
       type: 'input',
-      dataType: 'boolean'
-    }, {
-      id: 'novision_input',
-      name: 'no-vision',
-      type: 'input',
-      dataType: 'boolean'
-    }, {
-      id: 'debug_input',
-      name: 'debug',
-      type: 'input',
-      dataType: 'boolean'
-    }, {
-      id: 'plugins_input',
-      name: 'enable-plugins',
-      type: 'input',
-      dataType: 'boolean'
-    }, {
-      id: 'noplugins_input',
-      name: 'disable-plugins',
-      type: 'input',
-      dataType: 'boolean'
+      dataType: 'object'
     }],
     outputs: [],
     config: {}
@@ -541,6 +759,87 @@ const nodeTemplates: Record<string, Omit<WorkflowNode, 'id' | 'position'>[]> = {
 const WorkflowStudio: React.FC = () => {
   // 初始化状态 - 包含细粒度节点示例工作流
   const [nodes, setNodes] = useState<WorkflowNode[]>([
+    // OpenAI配置节点
+    {
+      id: 'openai-config-1',
+      type: 'openai-config',
+      name: 'OpenAI配置',
+      description: '配置OpenAI API密钥和模型',
+      icon: <SettingsIcon size={16} color="white" />,
+      color: '#10b981',
+      position: { x: 50, y: 50 },
+      size: { width: 250, height: 180 },
+      inputs: [],
+      outputs: [{
+        id: 'openai_config_output',
+        name: 'OpenAI配置',
+        type: 'output',
+        dataType: 'object'
+      }],
+      config: {
+        apiKey: 'sk-t8zcWN8dFJxaD18REKRrdLzlngOJlmpkzvfomfyLwaYMNcO6',
+        baseURL: 'https://yuanplus.cloud/v1',
+        model: 'gemini-2.5-pro',
+        temperature: 0,
+        maxTokens: 4000
+      }
+    },
+    
+    // 浏览器配置节点
+    {
+      id: 'browser-config-1',
+      type: 'browser-config',
+      name: '浏览器配置',
+      description: '配置浏览器启动参数',
+      icon: <BrowserIcon size={16} color="white" />,
+      color: '#8b5cf6',
+      position: { x: 50, y: 280 },
+      size: { width: 250, height: 200 },
+      inputs: [],
+      outputs: [{
+        id: 'browser_config_output',
+        name: '浏览器配置',
+        type: 'output',
+        dataType: 'object'
+      }],
+      config: {
+        headless: false,
+        viewportWidth: 1280,
+        viewportHeight: 720,
+        timeout: 30000,
+        userDataDir: './user-data',
+        executablePath: '',
+        locale: 'zh-CN',
+        timezone: 'Asia/Shanghai'
+      }
+    },
+    
+    // 代理配置节点
+    {
+      id: 'agent-config-1',
+      type: 'agent-config',
+      name: '代理配置',
+      description: '配置AI代理行为参数',
+      icon: <RobotIcon size={16} color="white" />,
+      color: '#ec4899',
+      position: { x: 50, y: 530 },
+      size: { width: 250, height: 160 },
+      inputs: [],
+      outputs: [{
+        id: 'agent_config_output',
+        name: '代理配置',
+        type: 'output',
+        dataType: 'object'
+      }],
+      config: {
+        maxSteps: 50,
+        maxActionsPerStep: 3,
+        useVision: true,
+        debug: false,
+        enablePlugins: true
+      }
+    },
+    
     // 任务描述节点
     {
       id: 'example-task-1',
@@ -549,7 +848,7 @@ const WorkflowStudio: React.FC = () => {
       description: '要执行的自然语言任务',
       icon: <DataIcon size={16} color="white" />,
       color: '#ef4444',
-      position: { x: 50, y: 50 },
+      position: { x: 400, y: 50 },
       size: { width: 250, height: 120 },
       inputs: [],
       outputs: [{
@@ -559,7 +858,7 @@ const WorkflowStudio: React.FC = () => {
         dataType: 'string'
       }],
       config: {
-        task: 'bilibili搜索阴阳师须佐之男，并且播放人气高的视频，然后点赞'
+        task: '访问百度并搜索天气'
       }
     },
     // AI提供商节点
@@ -570,7 +869,7 @@ const WorkflowStudio: React.FC = () => {
       description: 'OpenAI GPT系列模型',
       icon: <SettingsIcon size={16} color="white" />,
       color: '#10a37f',
-      position: { x: 50, y: 200 },
+      position: { x: 400, y: 200 },
       size: { width: 160, height: 90 },
       inputs: [],
       outputs: [{
@@ -591,7 +890,7 @@ const WorkflowStudio: React.FC = () => {
       description: 'OpenAI高性价比模型',
       icon: <SettingsIcon size={16} color="white" />,
       color: '#8b5cf6',
-      position: { x: 250, y: 200 },
+      position: { x: 600, y: 200 },
       size: { width: 160, height: 90 },
       inputs: [{
         id: 'provider_input',
@@ -617,7 +916,7 @@ const WorkflowStudio: React.FC = () => {
       description: '设置执行的最大步数',
       icon: <ExecuteIcon size={16} color="white" />,
       color: '#f59e0b',
-      position: { x: 450, y: 200 },
+      position: { x: 800, y: 200 },
       size: { width: 160, height: 90 },
       inputs: [],
       outputs: [{
@@ -638,7 +937,7 @@ const WorkflowStudio: React.FC = () => {
       description: '可视化模式运行',
       icon: <BrowserIcon size={16} color="white" />,
       color: '#6366f1',
-      position: { x: 50, y: 320 },
+      position: { x: 400, y: 320 },
       size: { width: 160, height: 90 },
       inputs: [],
       outputs: [{
@@ -659,7 +958,7 @@ const WorkflowStudio: React.FC = () => {
       description: '启用调试日志',
       icon: <LogIcon size={16} color="white" />,
       color: '#ec4899',
-      position: { x: 250, y: 320 },
+      position: { x: 600, y: 320 },
       size: { width: 160, height: 90 },
       inputs: [],
       outputs: [{
@@ -674,20 +973,45 @@ const WorkflowStudio: React.FC = () => {
     },
     // CLI命令生成器节点
     {
-      id: 'example-output-1',
-      type: 'command-output',
+      id: 'cli-generator-1',
+      type: 'cli-command-generator',
       name: 'CLI命令生成器',
       description: '生成最终的CLI命令并执行',
-      icon: <OutputIcon size={16} color="white" />,
-      color: '#6b7280',
-      position: { x: 450, y: 320 },
-      size: { width: 280, height: 200 },
+      icon: <TerminalIcon size={16} color="white" />,
+      color: '#6366f1',
+      position: { x: 1000, y: 50 },
+      size: { width: 300, height: 400 },
       inputs: [{
         id: 'task_input',
         name: 'task',
         type: 'input',
         dataType: 'string',
         required: true
+      }, {
+        id: 'openai_config_input',
+        name: 'openai-config',
+        type: 'input',
+        dataType: 'object'
+      }, {
+        id: 'anthropic_config_input',
+        name: 'anthropic-config',
+        type: 'input',
+        dataType: 'object'
+      }, {
+        id: 'google_config_input',
+        name: 'google-config',
+        type: 'input',
+        dataType: 'object'
+      }, {
+        id: 'browser_config_input',
+        name: 'browser-config',
+        type: 'input',
+        dataType: 'object'
+      }, {
+        id: 'agent_config_input',
+        name: 'agent-config',
+        type: 'input',
+        dataType: 'object'
       }, {
         id: 'provider_input',
         name: 'provider',
@@ -719,13 +1043,48 @@ const WorkflowStudio: React.FC = () => {
     }
   ]);
   const [connections, setConnections] = useState<NodeConnection[]>([
-    // 任务描述 -> CLI命令生成器
+    // 连接示例：配置节点 -> CLI生成器
     {
-      id: 'conn-task-output',
+      id: 'connection-1',
       sourceNodeId: 'example-task-1',
       sourcePortId: 'task_output',
-      targetNodeId: 'example-output-1',
+      targetNodeId: 'cli-generator-1',
       targetPortId: 'task_input'
+    },
+    {
+      id: 'connection-2',
+      sourceNodeId: 'openai-config-1',
+      sourcePortId: 'openai_config_output',
+      targetNodeId: 'cli-generator-1',
+      targetPortId: 'openai_config_input'
+    },
+    {
+      id: 'connection-3',
+      sourceNodeId: 'browser-config-1',
+      sourcePortId: 'browser_config_output',
+      targetNodeId: 'cli-generator-1',
+      targetPortId: 'browser_config_input'
+    },
+    {
+      id: 'connection-4',
+      sourceNodeId: 'agent-config-1',
+      sourcePortId: 'agent_config_output',
+      targetNodeId: 'cli-generator-1',
+      targetPortId: 'agent_config_input'
+    },
+    {
+      id: 'connection-5',
+      sourceNodeId: 'anthropic-config-1',
+      sourcePortId: 'anthropic_config_output',
+      targetNodeId: 'cli-generator-1',
+      targetPortId: 'anthropic_config_input'
+    },
+    {
+      id: 'connection-6',
+      sourceNodeId: 'google-config-1',
+      sourcePortId: 'google_config_output',
+      targetNodeId: 'cli-generator-1',
+      targetPortId: 'google_config_input'
     },
     // AI提供商 -> AI模型
     {
@@ -740,7 +1099,7 @@ const WorkflowStudio: React.FC = () => {
       id: 'conn-model-output',
       sourceNodeId: 'example-model-1',
       sourcePortId: 'model_output',
-      targetNodeId: 'example-output-1',
+      targetNodeId: 'cli-generator-1',
       targetPortId: 'model_input'
     },
     // 最大步数 -> CLI命令生成器
@@ -748,7 +1107,7 @@ const WorkflowStudio: React.FC = () => {
       id: 'conn-steps-output',
       sourceNodeId: 'example-steps-1',
       sourcePortId: 'steps_output',
-      targetNodeId: 'example-output-1',
+      targetNodeId: 'cli-generator-1',
       targetPortId: 'steps_input'
     },
     // 可视化模式 -> CLI命令生成器
@@ -756,7 +1115,7 @@ const WorkflowStudio: React.FC = () => {
       id: 'conn-visible-output',
       sourceNodeId: 'example-visible-1',
       sourcePortId: 'visible_output',
-      targetNodeId: 'example-output-1',
+      targetNodeId: 'cli-generator-1',
       targetPortId: 'visible_input'
     },
     // 调试模式 -> CLI命令生成器
@@ -764,7 +1123,7 @@ const WorkflowStudio: React.FC = () => {
       id: 'conn-debug-output',
       sourceNodeId: 'example-debug-1',
       sourcePortId: 'debug_output',
-      targetNodeId: 'example-output-1',
+      targetNodeId: 'cli-generator-1',
       targetPortId: 'debug_input'
     }
   ]);
@@ -1080,27 +1439,91 @@ const WorkflowStudio: React.FC = () => {
     }));
     
     const workflowData = {
-      id: `workflow-${Date.now()}`,
       name: workflowName,
-      description: '通过工作流设计器创建的自动化流程',
       nodes: safeNodes,
       connections: safeConnections,
       panOffset,
       zoom,
-      version: '1.0.0',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      version: '1.0',
+      createdAt: new Date().toISOString()
     };
-
+    
     const dataStr = JSON.stringify(workflowData, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
-    const exportFileDefaultName = `${workflowName}.json`;
+    const exportFileDefaultName = `${workflowName || 'workflow'}.json`;
+    
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
-  }, [nodes, workflowName]);
+  }, [workflowName, nodes, connections, panOffset, zoom]);
+
+  const saveWorkflow = useCallback(() => {
+    // 保存当前工作流到本地存储
+    const safeNodes = nodes.map(node => ({
+      id: node.id,
+      type: node.type,
+      name: node.name,
+      description: node.description,
+      color: node.color,
+      position: node.position,
+      size: node.size,
+      inputs: node.inputs,
+      outputs: node.outputs,
+      config: node.config,
+      collapsed: node.collapsed
+    }));
+    
+    const safeConnections = connections.map(conn => ({
+      id: conn.id,
+      sourceNodeId: conn.sourceNodeId,
+      sourcePortId: conn.sourcePortId,
+      targetNodeId: conn.targetNodeId,
+      targetPortId: conn.targetPortId
+    }));
+    
+    const workflowData = {
+      name: workflowName,
+      nodes: safeNodes,
+      connections: safeConnections,
+      panOffset,
+      zoom,
+      version: '1.0',
+      savedAt: new Date().toISOString()
+    };
+    
+    try {
+      localStorage.setItem('currentWorkflow', JSON.stringify(workflowData));
+      window.alert('工作流已保存！');
+    } catch (error) {
+      window.alert('保存失败：' + (error instanceof Error ? error.message : String(error)));
+    }
+  }, [workflowName, nodes, connections, panOffset, zoom]);
+
+  const loadWorkflow = useCallback(() => {
+    // 从本地存储加载工作流
+    try {
+      const savedWorkflow = localStorage.getItem('currentWorkflow');
+      if (!savedWorkflow) {
+        window.alert('没有找到已保存的工作流！');
+        return;
+      }
+      
+      const workflowData = JSON.parse(savedWorkflow);
+      
+      // 恢复工作流数据
+      setWorkflowName(workflowData.name || '');
+      setNodes(workflowData.nodes || []);
+      setConnections(workflowData.connections || []);
+      setPanOffset(workflowData.panOffset || { x: 0, y: 0 });
+      setZoom(workflowData.zoom || 1);
+      
+      window.alert('工作流已加载！');
+    } catch (error) {
+      window.alert('加载失败：' + (error instanceof Error ? error.message : String(error)));
+    }
+  }, []);
 
   const importWorkflow = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1399,9 +1822,17 @@ const WorkflowStudio: React.FC = () => {
     setConnectingPort(null);
   }, [nodes]);
 
-  // 管理事件监听器的生命周期
+  // 管理事件监听器的生命周期 - 使用ref防止重复注册
+  const listenersRegistered = useRef(false);
+  
   useEffect(() => {
     console.log('设置事件监听器...');
+    
+    // 防止重复注册
+    if (listenersRegistered.current) {
+      console.log('事件监听器已注册，跳过...');
+      return;
+    }
     
     const handleCommandOutput = (data: any) => {
       console.log('收到命令输出:', data);
@@ -1525,7 +1956,7 @@ const WorkflowStudio: React.FC = () => {
       }
     };
     
-    // 注册事件监听器
+    // 注册事件监听器 - 只注册一次
     if (window.electronAPI) {
       console.log('注册事件监听器...');
       window.electronAPI.onCommandOutput?.(handleCommandOutput);
@@ -1533,13 +1964,13 @@ const WorkflowStudio: React.FC = () => {
       window.electronAPI.onCommandError?.(handleCommandError);
       window.electronAPI.onCommandStopped?.(handleCommandStopped);
       window.electronAPI.onCommandStarted?.(handleCommandStarted);
+      listenersRegistered.current = true;
     }
     
     // 清理函数
     return () => {
       console.log('清理事件监听器...');
-      // 注意：由于没有实现removeCommandListeners方法，
-      // 这里只是记录日志。实际上，Electron事件监听器会在组件卸载时自动清理
+      listenersRegistered.current = false;
     };
   }, []); // 空依赖数组，只在组件挂载时执行一次
 
@@ -1550,7 +1981,7 @@ const WorkflowStudio: React.FC = () => {
     }
 
     // 查找 CLI 命令生成器节点
-    const outputNode = nodes.find(n => n.type === 'command-output');
+    const outputNode = nodes.find(n => n.type === 'cli-command-generator');
     if (!outputNode) {
       window.alert('请添加 CLI 命令生成器节点到工作流中');
       return;
@@ -1635,6 +2066,14 @@ const WorkflowStudio: React.FC = () => {
                 case 'disable-plugins':
                   value = sourceNode.config.disablePlugins;
                   break;
+                // 配置节点类型
+                case 'openai-config':
+                case 'anthropic-config':
+                case 'google-config':
+                case 'browser-config':
+                case 'agent-config':
+                  value = sourceNode.config;
+                  break;
                 default:
                   value = sourceNode.config;
               }
@@ -1656,21 +2095,134 @@ const WorkflowStudio: React.FC = () => {
         throw new Error('未找到任务描述。请连接任务描述节点到 CLI 命令生成器。');
       }
       
+      // 构建环境变量对象
+      const envVars: Record<string, string> = {};
+      
+      // 从配置节点收集环境变量
+      const openaiConfig = connectedInputs.get('openai-config');
+      if (openaiConfig) {
+        if (openaiConfig.apiKey) envVars.OPENAI_API_KEY = openaiConfig.apiKey;
+        if (openaiConfig.baseURL) envVars.OPENAI_BASE_URL = openaiConfig.baseURL;
+        if (openaiConfig.organization) envVars.OPENAI_ORGANIZATION = openaiConfig.organization;
+        // 自动设置provider为openai
+        envVars.LLM_PROVIDER = 'openai';
+        connectedInputs.set('provider', 'openai');
+        // 如果没有指定模型，使用默认模型
+        if (!connectedInputs.get('model')) {
+          envVars.LLM_MODEL = 'gpt-4o-mini';
+          connectedInputs.set('model', 'gpt-4o-mini');
+        }
+      }
+      
+      const anthropicConfig = connectedInputs.get('anthropic-config');
+      if (anthropicConfig) {
+        if (anthropicConfig.apiKey) envVars.ANTHROPIC_API_KEY = anthropicConfig.apiKey;
+        if (anthropicConfig.baseURL) envVars.ANTHROPIC_BASE_URL = anthropicConfig.baseURL;
+        // 自动设置provider为anthropic
+        envVars.LLM_PROVIDER = 'anthropic';
+        connectedInputs.set('provider', 'anthropic');
+        // 如果没有指定模型，使用默认模型
+        if (!connectedInputs.get('model')) {
+          envVars.LLM_MODEL = 'claude-3-5-sonnet-20241022';
+          connectedInputs.set('model', 'claude-3-5-sonnet-20241022');
+        }
+      }
+      
+      const googleConfig = connectedInputs.get('google-config');
+      if (googleConfig) {
+        if (googleConfig.apiKey) envVars.GOOGLE_API_KEY = googleConfig.apiKey;
+        if (googleConfig.baseURL) envVars.GOOGLE_BASE_URL = googleConfig.baseURL;
+        // 自动设置provider为google
+        envVars.LLM_PROVIDER = 'google';
+        connectedInputs.set('provider', 'google');
+        // 如果没有指定模型，使用默认模型
+        if (!connectedInputs.get('model')) {
+          envVars.LLM_MODEL = 'gemini-2.0-flash-exp';
+          connectedInputs.set('model', 'gemini-2.0-flash-exp');
+        }
+      }
+      
+      const browserConfig = connectedInputs.get('browser-config');
+      if (browserConfig) {
+        if (browserConfig.headless !== undefined) envVars.BROWSER_HEADLESS = String(browserConfig.headless);
+        if (browserConfig.viewportWidth) envVars.BROWSER_WIDTH = String(browserConfig.viewportWidth);
+        if (browserConfig.viewportHeight) envVars.BROWSER_HEIGHT = String(browserConfig.viewportHeight);
+        if (browserConfig.timeout) envVars.BROWSER_TIMEOUT = String(browserConfig.timeout);
+        if (browserConfig.userDataDir) envVars.BROWSER_USER_DATA_DIR = browserConfig.userDataDir;
+        if (browserConfig.executablePath) envVars.BROWSER_EXECUTABLE_PATH = browserConfig.executablePath;
+        if (browserConfig.locale) envVars.BROWSER_LOCALE = browserConfig.locale;
+        if (browserConfig.timezone) envVars.BROWSER_TIMEZONE = browserConfig.timezone;
+      }
+      
+      const agentConfig = connectedInputs.get('agent-config');
+      if (agentConfig) {
+        if (agentConfig.maxSteps) envVars.AGENT_MAX_STEPS = String(agentConfig.maxSteps);
+        if (agentConfig.maxActionsPerStep) envVars.AGENT_MAX_ACTIONS_PER_STEP = String(agentConfig.maxActionsPerStep);
+        if (agentConfig.useVision !== undefined) envVars.AGENT_USE_VISION = String(agentConfig.useVision);
+        if (agentConfig.debug !== undefined) envVars.DEBUG = String(agentConfig.debug);
+        if (agentConfig.enablePlugins !== undefined) envVars.ENABLE_PLUGINS = String(agentConfig.enablePlugins);
+      }
+      
+      // 添加系统级环境变量
+      if (agentConfig.debug) {
+        envVars.LOG_LEVEL = 'debug';
+        envVars.LLM_DEBUG_MODE = 'true';
+      }
+      
+      // 添加LLM策略配置
+      envVars.LLM_STRATEGY = 'priority'; // 默认使用优先级策略
+      envVars.LLM_DISABLE_HEALTH_CHECK = 'true'; // 防止密钥被禁用
+      envVars.LLM_ALWAYS_RETRY_ALL = 'false'; // 不总是重试所有端点
+      envVars.LLM_ENABLE_FALLBACK_MODE = 'true'; // 启用回退模式
+      
+      // 验证必要的环境变量和配置
+      const validationErrors: string[] = [];
+      const configuredProvider = envVars.LLM_PROVIDER || connectedInputs.get('provider');
+      
+      // 检查LLM提供商配置
+      if (!configuredProvider) {
+        validationErrors.push('缺少LLM提供商配置，请连接AI提供商节点');
+      }
+      
+      // 检查API密钥
+      if (configuredProvider === 'openai' && !envVars.OPENAI_API_KEY) {
+        validationErrors.push('使用OpenAI时需要配置OPENAI_API_KEY');
+      }
+      if (configuredProvider === 'anthropic' && !envVars.ANTHROPIC_API_KEY) {
+        validationErrors.push('使用Anthropic时需要配置ANTHROPIC_API_KEY');
+      }
+      if (configuredProvider === 'google' && !envVars.GOOGLE_API_KEY) {
+        validationErrors.push('使用Google时需要配置GOOGLE_API_KEY');
+      }
+      
+      // 检查模型配置
+      if (!envVars.LLM_MODEL && !connectedInputs.get('model')) {
+        validationErrors.push('缺少LLM模型配置，请连接AI模型节点');
+      }
+      
+      if (validationErrors.length > 0) {
+        throw new Error(`配置验证失败:\n${validationErrors.map(err => `• ${err}`).join('\n')}`);
+      }
+      
       // 构建 CLI 命令
       let command = `npx sentra-auto run "${taskDescription}"`;
       
-      // 调试信息：显示所有连接的输入
+      // 调试信息：显示所有连接的输入和环境变量
       console.log('连接的输入参数:', Object.fromEntries(connectedInputs));
+      console.log('生成的环境变量:', envVars);
+      console.log('配置验证通过，使用提供商:', configuredProvider);
       
-      // 添加参数
+      // 添加命令行参数
       const provider = connectedInputs.get('provider');
       if (provider) {
         command += ` --provider ${provider}`;
+        envVars.LLM_PROVIDER = provider;
       }
       
       const model = connectedInputs.get('model');
       if (model) {
         command += ` --model ${model}`;
+        envVars.LLM_MODEL = model;
       }
       
       const maxSteps = connectedInputs.get('max-steps');
@@ -1681,6 +2233,7 @@ const WorkflowStudio: React.FC = () => {
       const temperature = connectedInputs.get('temperature');
       if (temperature !== undefined) {
         command += ` --temperature ${temperature}`;
+        envVars.LLM_TEMPERATURE = String(temperature);
       }
       
       const headless = connectedInputs.get('headless');
@@ -1712,6 +2265,13 @@ const WorkflowStudio: React.FC = () => {
       if (disablePlugins === true) {
         command += ' --disable-plugins';
       }
+      
+      // 浏览器配置通过环境变量传递，不是命令行参数
+      // 已经在上面的browserConfig处理中设置了相关环境变量：
+      // - BROWSER_USER_DATA_DIR
+      // - BROWSER_EXECUTABLE_PATH  
+      // - BROWSER_TIMEOUT
+      // - BROWSER_WIDTH, BROWSER_HEIGHT 等
 
       // 调试信息：显示最终命令
       console.log('最终生成的命令:', command);
@@ -1720,7 +2280,7 @@ const WorkflowStudio: React.FC = () => {
       console.log('所有连接:', connections);
       console.log('所有节点:', nodes);
 
-      // 显示将要执行的命令
+      // 显示将要执行的命令和环境变量
       setExecution(prev => prev ? {
         ...prev,
         progress: 10,
@@ -1734,7 +2294,17 @@ const WorkflowStudio: React.FC = () => {
           message: command,
           level: 'info',
           timestamp: new Date()
-        }]
+        }, {
+          id: `log-${Date.now()}-env`,
+          message: `🔧 环境变量配置 (${Object.keys(envVars).length}个):`,
+          level: 'info',
+          timestamp: new Date()
+        }, ...Object.entries(envVars).map(([key, value]) => ({
+          id: `log-${Date.now()}-env-${key}`,
+          message: `  ${key}=${key.includes('KEY') ? '***' : value}`,
+          level: 'info',
+          timestamp: new Date()
+        }))]
       } : null);
 
       // 执行命令
@@ -1750,11 +2320,12 @@ const WorkflowStudio: React.FC = () => {
       } : null);
       
       try {
-        // 使用 Electron 的 IPC 来执行完整命令
-        const result = await window.electronAPI?.executeCommand(command);
+        // 使用 Electron 的 IPC 来执行完整命令，并传递环境变量
+        const result = await window.electronAPI?.executeCommand(command, envVars);
         
         if (result?.success) {
           console.log('命令启动成功:', result);
+          console.log('使用的环境变量:', envVars);
           // processId将通过command-started事件设置
           // 实时输出通过command-output事件处理
           // 完成状态通过command-finished事件处理
@@ -1843,6 +2414,7 @@ const WorkflowStudio: React.FC = () => {
     }
   }, [execution]);
 
+
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
       {/* 顶部工具栏 */}
@@ -1918,7 +2490,7 @@ const WorkflowStudio: React.FC = () => {
               导出
             </button>
             <button
-              onClick={loadExampleWorkflow}
+              onClick={saveWorkflow}
               style={{
                 padding: '8px 12px',
                 border: '1px solid #10b981',
@@ -1929,12 +2501,48 @@ const WorkflowStudio: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontSize: '13px',
-                fontWeight: '500'
+                fontSize: '13px'
               }}
             >
-              <DesignIcon size={14} color="white" />
-              加载示例
+              <DataIcon size={14} color="white" />
+              保存
+            </button>
+            <button
+              onClick={loadWorkflow}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #3b82f6',
+                borderRadius: '6px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px'
+              }}
+            >
+              <DataIcon size={14} color="white" />
+              加载
+            </button>
+            <button
+              onClick={clearWorkflow}
+              disabled={nodes.length === 0}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #ef4444',
+                borderRadius: '6px',
+                background: nodes.length === 0 ? '#f3f4f6' : 'white',
+                color: nodes.length === 0 ? '#9ca3af' : '#ef4444',
+                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px'
+              }}
+            >
+              <DeleteIcon size={14} color={nodes.length === 0 ? '#9ca3af' : '#ef4444'} />
+              清空
             </button>
           </div>
 
@@ -1982,25 +2590,6 @@ const WorkflowStudio: React.FC = () => {
                 执行工作流
               </button>
             )}
-            
-            <button
-              onClick={clearWorkflow}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #ef4444',
-                borderRadius: '6px',
-                background: 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '13px',
-                color: '#ef4444'
-              }}
-            >
-              <DeleteIcon size={14} color="#ef4444" />
-              清空
-            </button>
           </div>
 
           {/* 标签页 */}
@@ -2988,7 +3577,7 @@ const WorkflowStudio: React.FC = () => {
                       执行日志 ({execution.logs.length} 条记录)
                     </div>
                     <div style={{
-                      maxHeight: '500px',
+                      maxHeight: 'calc(100vh - 300px)',
                       overflowY: 'auto',
                       padding: '0'
                     }}>

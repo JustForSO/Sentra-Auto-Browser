@@ -11,7 +11,7 @@ export interface ElectronAPI {
   saveEnvConfig: (content: string) => Promise<{ success: boolean }>;
   
   // 命令执行
-  executeCommand: (command: string, args?: string[]) => Promise<{
+  executeCommand: (command: string, envVars?: Record<string, string>) => Promise<{
     processId: string;
     code: number | null;
     output: string;
@@ -236,8 +236,8 @@ const electronAPI: ElectronAPI = {
   readEnvConfig: () => ipcRenderer.invoke('read-env-config'),
   saveEnvConfig: (content: string) => ipcRenderer.invoke('save-env-config', content),
   
-  executeCommand: (command: string, args?: string[]) => 
-    ipcRenderer.invoke('execute-command', command),
+  executeCommand: (command: string, envVars?: Record<string, string>) => 
+    ipcRenderer.invoke('execute-command', command, envVars),
   killCommand: (processId: string) => ipcRenderer.invoke('stop-command', processId),
   getRunningProcesses: () => ipcRenderer.invoke('get-running-commands'),
   

@@ -936,9 +936,10 @@ app.on('before-quit', () => {
 });
 
 // 执行命令的IPC处理器 - 支持实时输出流
-ipcMain.handle('execute-command', async (event: any, command: string) => {
+ipcMain.handle('execute-command', async (event: any, command: string, workflowEnvVars: Record<string, string> = {}) => {
   const processId = `cmd-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   console.log('正在执行命令:', command, '进程ID:', processId);
+  console.log('工作流环境变量:', workflowEnvVars);
   
   // 在项目根目录中执行命令
   const projectRoot = getProjectRoot();
@@ -981,14 +982,28 @@ ipcMain.handle('execute-command', async (event: any, command: string) => {
     const commandWithoutNpx = command.replace('npx sentra-auto', '').trim();
     const extraArgs = splitArgsSafely(commandWithoutNpx);
 
-    // 根据是否打包，定位 CLI 入口
+    // 修复CLI文件路径 - 始终使用主项目根目录的dist
     const isDevEnv = !app.isPackaged;
-    const resourcesRoot = path.join(path.dirname(app.getPath('exe')), 'resources');
-    const prodCliCandidateA = path.join(resourcesRoot, 'sentra-core', 'cli', 'index.js');
-    const prodCliCandidateB = path.join(resourcesRoot, 'app.asar.unpacked', 'sentra-core', 'cli', 'index.js');
-    const cliEntry = isDevEnv
-      ? path.join(projectRoot, 'dist', 'cli', 'index.js')
-      : (fs.existsSync(prodCliCandidateA) ? prodCliCandidateA : prodCliCandidateB);
+    let cliEntry: string;
+    
+    if (isDevEnv) {
+      // 开发模式：使用主项目根目录的dist/cli/index.js
+      cliEntry = path.join(projectRoot, 'dist', 'cli', 'index.js');
+    } else {
+      // 生产模式：多种路径候选
+      const resourcesRoot = path.join(path.dirname(app.getPath('exe')), 'resources');
+      const candidates = [
+        path.join(resourcesRoot, 'sentra-core', 'dist', 'cli', 'index.js'),
+        path.join(resourcesRoot, 'app.asar.unpacked', 'sentra-core', 'dist', 'cli', 'index.js'),
+        path.join(resourcesRoot, 'sentra-core', 'cli', 'index.js'),
+        path.join(app.getAppPath(), '..', 'sentra-core', 'dist', 'cli', 'index.js'),
+        path.join(app.getAppPath(), '..', 'app.asar.unpacked', 'sentra-core', 'dist', 'cli', 'index.js')
+      ];
+      
+      cliEntry = candidates.find(candidate => fs.existsSync(candidate)) || candidates[0];
+      console.log('生产模式CLI路径候选:', candidates);
+      console.log('选择的CLI路径:', cliEntry);
+    }
 
     args = [cliEntry, ...extraArgs];
   } else {
@@ -1009,13 +1024,16 @@ ipcMain.handle('execute-command', async (event: any, command: string) => {
     const cliPath = args[0];
     console.log('CLI文件路径:', cliPath);
     console.log('CLI文件是否存在:', fs.existsSync(cliPath));
+    console.log('项目根目录:', projectRoot);
+    console.log('项目根目录内容:', fs.existsSync(projectRoot) ? fs.readdirSync(projectRoot) : '目录不存在');
+    
     if (!fs.existsSync(cliPath)) {
       console.error('CLI文件不存在，请先构建主项目');
       return {
         processId,
         code: -1,
         output: '',
-        errorOutput: 'CLI文件不存在：开发模式下请在仓库根运行 npm run build；打包模式下请确认 extraResources 已包含主项目 dist',
+        errorOutput: `CLI文件不存在: ${cliPath}\n项目根目录: ${projectRoot}\n请确保已正确构建项目。开发模式下请在仓库根运行 npm run build；打包模式下请确认 extraResources 已包含主项目 dist`,
         success: false
       };
     }
@@ -1031,31 +1049,75 @@ ipcMain.handle('execute-command', async (event: any, command: string) => {
       return p.toLowerCase().includes('\\windows\\system32') ? p : `C\\Windows\\System32;${p}`;
     })();
 
-    // 运行时的 node_modules 路径，打包后用于解析 CLI 依赖
+    // 运行时的 node_modules 路径，打包后使用应用自带的依赖
     const runtimeNodeModules = (() => {
       const isDevEnv = !app.isPackaged;
       if (isDevEnv) {
         return path.join(projectRoot, 'node_modules');
       }
-      const resourcesRoot = path.join(path.dirname(app.getPath('exe')), 'resources');
-      return path.join(resourcesRoot, 'sentra-core', 'node_modules');
+      // 打包后使用应用程序自带的node_modules
+      return path.join(path.dirname(app.getPath('exe')), '..', 'node_modules');
     })();
 
     const isWindows = process.platform === 'win32';
+    // 读取主项目的.env文件并加载环境变量
+    const envPath = path.join(projectRoot, '.env');
+    let envVars: Record<string, string> = {};
+    
+    console.log('尝试加载.env文件:', envPath);
+    console.log('.env文件是否存在:', fs.existsSync(envPath));
+    
+    if (fs.existsSync(envPath)) {
+      console.log('成功加载主项目.env文件:', envPath);
+      const envContent = fs.readFileSync(envPath, 'utf-8');
+      envContent.split('\n').forEach((line: string) => {
+        const trimmedLine = line.trim();
+        if (trimmedLine && !trimmedLine.startsWith('#') && trimmedLine.includes('=')) {
+          const [key, ...valueParts] = trimmedLine.split('=');
+          if (key && valueParts.length > 0) {
+            envVars[key.trim()] = valueParts.join('=').trim();
+          }
+        }
+      });
+      console.log('已加载环境变量数量:', Object.keys(envVars).length);
+    } else {
+      console.log('主项目.env文件不存在:', envPath);
+      // 尝试查找其他可能的.env文件位置
+      const envCandidates = [
+        path.join(projectRoot, '.env.example'),
+        path.join(projectRoot, '.env.local'),
+        path.join(projectRoot, 'config', '.env'),
+        path.join(path.dirname(projectRoot), '.env')
+      ];
+      
+      console.log('尝试查找备用.env文件:');
+      envCandidates.forEach(candidate => {
+        console.log(`  ${candidate}: ${fs.existsSync(candidate) ? '存在' : '不存在'}`);
+      });
+    }
+
+    // 合并工作流环境变量，工作流变量优先级更高
+    const finalEnvVars = {
+      ...envVars, // 主项目.env文件的变量
+      ...workflowEnvVars // 工作流配置的变量（优先级更高）
+    };
+    
+    console.log('最终环境变量数量:', Object.keys(finalEnvVars).length);
+    console.log('工作流覆盖的变量:', Object.keys(workflowEnvVars));
+
     const childProcess = spawn(mainCommand, args, {
-      cwd: projectRoot,
+      cwd: projectRoot, // 确保在主项目根目录执行
       stdio: ['pipe', 'pipe', 'pipe'],
-      // 对于我们自己用 node 执行 CLI 的场景，禁用 shell 能避免空格路径解析问题
-      // 其他普通命令仍然让 Node 直跑（不依赖 cmd.exe）更稳妥
       shell: false,
       env: {
         ...process.env,
+        ...finalEnvVars, // 使用合并后的最终环境变量
         // 设置中文编码支持
         LANG: 'zh_CN.UTF-8',
         LC_ALL: 'zh_CN.UTF-8',
         LC_CTYPE: 'zh_CN.UTF-8',
         // Windows 特定设置
-        CHCP: '65001', // Windows UTF-8 编码
+        CHCP: '65001',
         ComSpec: defaultComspec,
         COMSPEC: defaultComspec,
         PATH: ensuredPath,

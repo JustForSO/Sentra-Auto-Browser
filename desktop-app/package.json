@@ -43,6 +43,10 @@
         "from": "../docs",
         "to": "sentra-core/docs",
         "filter": ["**/*"]
+      },
+      {
+        "from": "../.env",
+        "to": "sentra-core/.env"
       }
     ],
     "asarUnpack": [

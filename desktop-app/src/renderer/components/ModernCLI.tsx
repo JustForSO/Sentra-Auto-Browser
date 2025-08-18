@@ -286,9 +286,7 @@ const ModernCLI: React.FC = () => {
       ));
 
       // 解析命令
-      const parts = execution.command.split(' ');
-      const cmd = parts[0];
-      const args = parts.slice(1);
+      const fullCommand = execution.command;
 
       // 模拟进度
       const progressInterval = setInterval(() => {
@@ -299,7 +297,7 @@ const ModernCLI: React.FC = () => {
         ));
       }, 1000);
 
-      const result = await window.electronAPI.executeCommand(cmd, args);
+      const result = await window.electronAPI.executeCommand(fullCommand);
       
       clearInterval(progressInterval);
       
