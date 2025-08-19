@@ -120,7 +120,7 @@ npx playwright install
 
 创建 `.env` 文件并配置你的AI模型API密钥：
 
-```env
+```bash
 # OpenAI配置
 OPENAI_API_KEY=your_openai_api_key
 OPENAI_BASE_URL=https://api.openai.com/v1
@@ -147,6 +147,89 @@ BROWSER_DEBUG_HOST=localhost
 BROWSER_DEBUG_PORT=9222
 
 # 日志配置
+LOG_LEVEL=info
+DEBUG=false
+```
+
+最简高效 env 配置，使用CDP协议
+
+```bash
+# LLM 配置
+# OpenAI 配置 (默认，优先级最高)
+# OPENAI_API_KEY=sk-xxxxxx
+# OPENAI_MODEL=gpt-5
+# OpenAI-compatible API (代理，负载均衡)
+# OPENAI_BASE_URL=https://api.openai.com
+# openai形式供应商的api示例:
+# OPENAI_BASE_URL=https://api.deepseek.com/v1
+# OPENAI_BASE_URL=https://api.moonshot.cn/v1
+# google，claude配置同理
+
+OPENAI_BASE_URL=https://xxxxxx
+OPENAI_API_KEY=sk-xxxxxx
+OPENAI_MODEL=gpt-4o-mini
+
+# Google Gemini 配置
+GOOGLE_API_KEYS=AIzaSyBQY9CVy8MXEraQiwSOxZH-r0CGY8IWhec,AIzaSyBxAeqYFewlD5w69UXn-HFY-dsDl3crtE8
+GOOGLE_MODELS=gemini-2.5-flash
+GOOGLE_BASE_URL=https://api-proxy.me/gemini/v1beta/,https://api-proxy.me/gemini/v1beta/
+
+# LLM 设置
+LLM_DISABLE_HEALTH_CHECK=true
+LLM_TEMPERATURE=0
+LLM_MAX_TOKENS=-1
+
+# 是否连接用户自己的浏览器
+# true: 连接现有浏览器（无自动化痕迹）
+# false: 使用Playwright启动新浏览器（标准模式）
+BROWSER_CONNECT_TO_USER_BROWSER=true
+
+# 连接模式：smart（智能）、connect（连接）、persistent（持久）、launch（启动）
+BROWSER_CONNECTION_MODE=smart
+
+# 调试端口配置
+BROWSER_DEBUG_PORT=9222
+BROWSER_DEBUG_HOST=localhost
+
+# Edge浏览器路径
+BROWSER_EXECUTABLE_PATH=C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+
+# 用户数据目录（改成你的实际路径）
+BROWSER_USER_DATA_DIR=C:\Users\1\AppData\Local\Microsoft\Edge\User Data
+
+# 反检测模式，默认关闭，按需启用
+BROWSER_STEALTH_MODE=false
+
+# 自动关闭浏览器，连接用户浏览器时建议设为false
+BROWSER_AUTO_CLOSE=false
+
+# 窗口显示配置
+BROWSER_HEADLESS=false
+BROWSER_MAXIMIZED=true
+BROWSER_FULLSCREEN=false
+BROWSER_WIDTH=1920
+BROWSER_HEIGHT=1080
+
+# GPU加速
+BROWSER_ENABLE_GPU=true
+
+# 自定义浏览器启动参数，例如：--enable-gpu,--start-maximized
+# BROWSER_ARGS=--enable-gpu,--start-maximized
+
+# 页面超时配置
+BROWSER_TIMEOUT=30000
+BROWSER_PAGE_LOAD_TIMEOUT=30000
+BROWSER_NAVIGATION_TIMEOUT=30000
+
+# Playwright 浏览器安装
+BROWSER_AUTO_INSTALL=true
+
+# ai决策
+AGENT_MAX_STEPS=50
+AGENT_MAX_ACTIONS_PER_STEP=3
+AGENT_USE_VISION=true
+
+# 日志
 LOG_LEVEL=info
 DEBUG=false
 ```
